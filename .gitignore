@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Secrets — never commit these
+.env
+.env.local
+android/local.properties
+
+# Android
+android/.gradle/
+android/local.properties
+android/*.iml
+android/.idea/
+android/captures/
+android/app/build/
+android/build/
+
+# OS/editor cruft
+.DS_Store
+*.log

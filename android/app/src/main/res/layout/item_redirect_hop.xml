@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CipherScan — item_redirect_hop.xml
+  Single row in the redirect chain list inside SecurityOverlayBottomSheet.
+  Shows hop number + the full URL.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <!-- Hop number badge -->
+    <TextView
+        android:id="@+id/tvHopNumber"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:gravity="center"
+        android:textColor="@color/accent_cyan"
+        android:textStyle="bold"
+        android:textSize="12sp"
+        android:background="@drawable/hop_badge_bg"
+        android:layout_marginEnd="10dp" />
+
+    <!-- URL text — single line with ellipsis -->
+    <TextView
+        android:id="@+id/tvHopUrl"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</LinearLayout>

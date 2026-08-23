@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CipherScan color palette — mirrors the web dashboard design tokens.
+  Referenced throughout layouts and Kotlin code via @color/...
+-->
+<resources>
+    <!-- Backgrounds -->
+    <color name="background_deep">#0A0E1A</color>
+    <color name="surface_dark">#111827</color>
+    <color name="surface_elevated">#1F2937</color>
+    <color name="border_color">#1F2937</color>
+
+    <!-- Brand accents -->
+    <color name="accent_cyan">#00D4FF</color>
+    <color name="accent_purple">#7C3AED</color>
+
+    <!-- Verdict / risk colors -->
+    <color name="safe_green">#10B981</color>
+    <color name="warning_amber">#F59E0B</color>
+    <color name="danger_red">#EF4444</color>
+
+    <!-- Text -->
+    <color name="text_primary">#F9FAFB</color>
+    <color name="text_muted">#6B7280</color>
+
+    <!-- System -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

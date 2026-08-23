@@ -1,0 +1,29 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "workspace": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "^0.5.1",
+    "pg": "^8.13.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.3",
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.28.1"
+  }
+}

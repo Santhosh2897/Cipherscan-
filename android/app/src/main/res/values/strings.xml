@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CipherScan</string>
+    <string name="verifying_link">Verifying link safety…</string>
+    <string name="verdict_safe">SAFE</string>
+    <string name="verdict_suspicious">SUSPICIOUS</string>
+    <string name="verdict_malicious">MALICIOUS</string>
+    <string name="btn_abort">Abort &amp; Go Back</string>
+    <string name="btn_proceed">Proceed Anyway</string>
+    <string name="threat_reasons_heading">Why this was flagged</string>
+    <string name="redirect_chain_show">Show redirect chain ▼</string>
+    <string name="redirect_chain_hide">Hide redirect chain ▲</string>
+    <string name="screenshot_preview_desc">Website screenshot preview</string>
+</resources>
