@@ -7,50 +7,49 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-/**
- * CipherScan — RetrofitClient
- *
- * Singleton Retrofit instance pointed at the CipherScan backend.
- *
- * Configuration (local.properties):
- *   cipherscan.server.url=https://your-backend.replit.app/
- *
- * The value is injected into BuildConfig via build.gradle:
- *   buildConfigField("String", "CIPHERSCAN_SERVER_URL",
- *       "\"${localProperties["cipherscan.server.url"]}\"")
- */
 object RetrofitClient {
+    private const val DEFAULT_BASE_URL = "https://cipherscan-ecjs.onrender.com/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
-                else                   HttpLoggingInterceptor.Level.NONE
+        level = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
     }
 
-    // Attaches the shared API key to every request so the backend's
-    // requireApiKey middleware accepts it. Must match APP_API_KEY set on
-    // the backend (see cipherscan.api.key in local.properties).
-    private val apiKeyInterceptor = okhttp3.Interceptor { chain ->
-        val original = chain.request()
-        val withKey = original.newBuilder()
-            .addHeader("x-api-key", BuildConfig.CIPHERSCAN_API_KEY)
-            .build()
-        chain.proceed(withKey)
-    }
-
-    private val httpClient = OkHttpClient.Builder()
-        .addInterceptor(apiKeyInterceptor)
+    private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)   // sandbox analysis can take ~5-10 s
-        .writeTimeout(10, TimeUnit.SECONDS)
+        .addInterceptor { chain ->
+            val original = chain.request()
+            val requestBuilder = original.newBuilder()
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+
+            // Only attach API key if explicitly configured
+            if (BuildConfig.API_KEY.isNotBlank() && BuildConfig.API_KEY != "null") {
+                requestBuilder.header("x-api-key", BuildConfig.API_KEY)
+            }
+
+            chain.proceed(requestBuilder.build())
+        }
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    val instance: ApiService by lazy {
+    private val retrofit: Retrofit by lazy {
+        val baseUrl = BuildConfig.SERVER_URL.ifBlank { DEFAULT_BASE_URL }
+        val sanitizedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+
         Retrofit.Builder()
-            .baseUrl(BuildConfig.CIPHERSCAN_SERVER_URL)
-            .client(httpClient)
+            .baseUrl(sanitizedUrl)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ApiService::class.java)
+    }
+
+    val apiService: ApiService by lazy {
+        retrofit.create(ApiService::class.java)
     }
 }
