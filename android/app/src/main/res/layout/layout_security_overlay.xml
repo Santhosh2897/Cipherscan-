@@ -1,199 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  CipherScan — layout_security_overlay.xml
-  Bottom sheet overlay shown when a malicious or suspicious URL is detected.
-
-  Inflated by SecurityOverlayBottomSheet.
-
-  Structure:
-   ┌─────────────────────────────────────────┐
-   │  ⚠ MALICIOUS              [Risk Gauge]  │
-   │  Phishing / Obfuscated Redirect         │
-   │  ─────────────────────────────────────  │
-   │  [Screenshot Preview Thumbnail]         │
-   │  ─────────────────────────────────────  │
-   │  Redirect Chain  (expandable)           │
-   │    1 → http://bit.ly/xxxx               │
-   │    2 → https://evil.com/login           │
-   │  ─────────────────────────────────────  │
-   │  Threat Reasons                         │
-   │    • Unrolled obfuscated short link     │
-   │    • Flagged by 3 VirusTotal vendors    │
-   │  ─────────────────────────────────────  │
-   │  [Abort & Go Back]   [Proceed Anyway]   │
-   └─────────────────────────────────────────┘
--->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@color/surface_dark"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="32dp">
+    android:background="#1E1E2E"
+    android:padding="20dp">
 
-    <!-- Drag handle -->
-    <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/drag_handle_shape" />
-
-    <!-- Header row: Verdict Badge + Risk Score Gauge -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvVerdictBadge"
-            android:layout_width="wrap_content"
+        <!-- Verdict Header & Risk Score -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:text="MALICIOUS"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:textSize="12sp"
-            android:letterSpacing="0.1"
-            android:background="@drawable/badge_bg_rounded" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvVerdictBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#33EF4444"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="MALICIOUS"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tvRiskScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Risk Score: 0/100"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Target URL -->
+        <TextView
+            android:id="@+id/tvTargetUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:text="https://example.com"
+            android:textColor="#9CA3AF"
+            android:textSize="13sp" />
 
         <View
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:layout_marginVertical="12dp"
+            android:background="#374151" />
 
-        <!-- Custom semicircular arc gauge -->
-        <com.cipherscan.android.ui.RiskGaugeView
-            android:id="@+id/riskGauge"
-            android:layout_width="80dp"
-            android:layout_height="80dp" />
-
+        <!-- Threat Reasons Section -->
         <TextView
-            android:id="@+id/tvRiskScore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="@color/danger_red"
-            android:layout_marginStart="6dp" />
+            android:text="Threat Details"
+            android:textColor="#F3F4F6"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
+        <LinearLayout
+            android:id="@+id/containerThreatReasons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
+        <!-- Screenshot Preview -->
+        <ImageView
+            android:id="@+id/ivScreenshotPreview"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="12dp"
+            android:adjustViewBounds="true"
+            android:background="#111827"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="#EF4444"
+                android:text="Block / Exit"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/btnProceedAnyway"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="#374151"
+                android:text="Proceed"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
     </LinearLayout>
-
-    <!-- Threat category label -->
-    <TextView
-        android:id="@+id/tvThreatCategory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/text_muted"
-        android:textSize="13sp"
-        android:layout_marginBottom="16dp"
-        android:visibility="gone" />
-
-    <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/border_color"
-        android:layout_marginBottom="12dp" />
-
-    <!-- Screenshot Preview (hidden if no previewImageUrl) -->
-    <ImageView
-        android:id="@+id/imgScreenshotPreview"
-        android:layout_width="match_parent"
-        android:layout_height="160dp"
-        android:scaleType="centerCrop"
-        android:adjustViewBounds="true"
-        android:background="@color/surface_elevated"
-        android:contentDescription="Website screenshot preview"
-        android:layout_marginBottom="16dp"
-        android:visibility="gone" />
-
-    <!-- Redirect chain toggle -->
-    <TextView
-        android:id="@+id/tvToggleChain"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Show redirect chain ▼"
-        android:textColor="@color/accent_cyan"
-        android:textSize="13sp"
-        android:layout_marginBottom="8dp"
-        android:clickable="true"
-        android:focusable="true" />
-
-    <!-- Redirect chain steps (collapsed by default) -->
-    <LinearLayout
-        android:id="@+id/redirectChainContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:layout_marginBottom="16dp"
-        android:background="@color/surface_elevated"
-        android:padding="12dp" />
-
-    <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/border_color"
-        android:layout_marginBottom="12dp" />
-
-    <!-- Threat Reasons heading -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Why this was flagged"
-        android:textColor="@color/text_primary"
-        android:textStyle="bold"
-        android:textSize="14sp"
-        android:layout_marginBottom="8dp" />
-
-    <!-- Threat Reasons list (populated programmatically) -->
-    <LinearLayout
-        android:id="@+id/reasonsContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="24dp" />
-
-    <!-- Action Buttons -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAbort"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="48dp"
-            android:text="Abort &amp; Go Back"
-            android:textColor="@color/white"
-            app:backgroundTint="@color/safe_green"
-            android:layout_marginEnd="8dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnProceed"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="48dp"
-            android:text="Proceed Anyway"
-            android:textColor="@color/danger_red"
-            app:backgroundTint="@android:color/transparent"
-            app:strokeColor="@color/danger_red"
-            app:strokeWidth="1dp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

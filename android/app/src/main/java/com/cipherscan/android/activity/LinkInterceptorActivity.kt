@@ -3,10 +3,13 @@ package com.cipherscan.android.activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.cipherscan.android.R
 import com.cipherscan.android.api.RetrofitClient
 import com.cipherscan.android.model.AnalyzeRequest
 import com.cipherscan.android.ui.SecurityOverlayBottomSheet
@@ -16,55 +19,72 @@ import kotlinx.coroutines.withContext
 
 class LinkInterceptorActivity : AppCompatActivity() {
 
+    companion object {
+        private const val TAG = "LinkInterceptor"
+    }
+
+    private var progressBar: ProgressBar? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_link_interceptor)
+
+        progressBar = findViewById(R.id.progressBar)
 
         val targetUrl = intent?.dataString
         if (targetUrl.isNullOrBlank()) {
-            Toast.makeText(this, "No URL provided", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No valid URL received", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        analyzeLink(targetUrl)
+        analyzeAndDisplay(targetUrl)
     }
 
-    private fun analyzeLink(url: String) {
-        lifecycleScope.launch {
-            try {
-                val scanResult = withContext(Dispatchers.IO) {
-                    RetrofitClient.apiService.analyzeUrl(
-                        AnalyzeRequest(
-                            url = url,
-                            targetUrl = url,
-                            triggerType = "CLICK"
-                        )
-                    )
-                }
+    private fun analyzeAndDisplay(url: String) {
+        progressBar?.visibility = View.VISIBLE
 
-                val bottomSheet = SecurityOverlayBottomSheet.newInstance(scanResult)
-                bottomSheet.show(supportFragmentManager, SecurityOverlayBottomSheet.TAG)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val request = AnalyzeRequest(url = url)
+                val response = RetrofitClient.instance.analyzeUrl(request)
+
+                withContext(Dispatchers.Main) {
+                    progressBar?.visibility = View.GONE
+                    if (response.isSuccessful && response.body() != null) {
+                        val scanResult = response.body()!!
+                        val bottomSheet = SecurityOverlayBottomSheet.newInstance(scanResult)
+                        bottomSheet.show(supportFragmentManager, "SecurityOverlayBottomSheet")
+                    } else {
+                        Log.e(TAG, "Analysis failed with code: ${response.code()}")
+                        fallbackOpenUrl(url)
+                    }
+                }
             } catch (e: Exception) {
-                showBackendTimeoutDialog(url, e.localizedMessage ?: "Network connection error")
+                Log.e(TAG, "Error connecting to backend: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    progressBar?.visibility = View.GONE
+                    Toast.makeText(
+                        this@LinkInterceptorActivity,
+                        "CipherScan service unreachable, opening link...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    fallbackOpenUrl(url)
+                }
             }
         }
     }
 
-    private fun showBackendTimeoutDialog(url: String, reason: String) {
-        AlertDialog.Builder(this)
-            .setTitle("Scan Timeout / Service Unavailable")
-            .setMessage("CipherScan could not verify this link in real time ($reason).\n\nDo you still want to proceed to open the URL?")
-            .setPositiveButton("Open Anyway") { _, _ ->
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(browserIntent)
-                finish()
+    private fun fallbackOpenUrl(url: String) {
+        try {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-            .setNegativeButton("Cancel") { _, _ ->
-                finish()
-            }
-            .setCancelable(false)
-            .show()
+            startActivity(browserIntent)
+        } catch (_: Exception) {
+            Toast.makeText(this, "Unable to open browser", Toast.LENGTH_SHORT).show()
+        } finally {
+            finish()
+        }
     }
 }
