@@ -1,3 +1,10 @@
+export class UnsafeUrlError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnsafeUrlError";
+  }
+}
+
 export function isPrivateOrReservedHost(hostname: string): boolean {
   if (
     hostname === "localhost" ||
@@ -9,7 +16,7 @@ export function isPrivateOrReservedHost(hostname: string): boolean {
     return true;
   }
 
-  // Check private IPv4 ranges (10.x, 172.16-31.x, 192.168.x, 169.254.x)
+  // Check private IPv4 ranges (10.x, 172.16-31.x, 192.168.x, 169.254.x, 0.x)
   const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
   const match = hostname.match(ipv4Regex);
   if (match) {
@@ -23,4 +30,23 @@ export function isPrivateOrReservedHost(hostname: string): boolean {
   }
 
   return false;
+}
+
+export function assertUrlIsSafe(urlString: string): URL {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(urlString);
+  } catch {
+    throw new UnsafeUrlError("Malformed or invalid URL format");
+  }
+
+  if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+    throw new UnsafeUrlError(`Unsupported URL protocol: ${parsedUrl.protocol}`);
+  }
+
+  if (isPrivateOrReservedHost(parsedUrl.hostname)) {
+    throw new UnsafeUrlError(`Access to internal/private host (${parsedUrl.hostname}) is blocked`);
+  }
+
+  return parsedUrl;
 }

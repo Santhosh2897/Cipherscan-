@@ -8,7 +8,7 @@ interface CachedReputation {
 const reputationCache = new Map<string, CachedReputation>();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-export async function checkDomainReputation(domain: string) {
+export async function analyzeReputation(domain: string) {
   const cached = reputationCache.get(domain);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     logger.info({ domain }, "Serving domain reputation from cache");
@@ -77,3 +77,6 @@ export async function checkDomainReputation(domain: string) {
   reputationCache.set(domain, { data: result, timestamp: Date.now() });
   return result;
 }
+
+// Alias export for backwards-compatibility
+export const checkDomainReputation = analyzeReputation;

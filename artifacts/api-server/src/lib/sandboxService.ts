@@ -28,7 +28,7 @@ export interface SandboxResult {
   error?: string;
 }
 
-export async function runUrlSandbox(targetUrl: string): Promise<SandboxResult> {
+export async function analyzeSandbox(targetUrl: string): Promise<SandboxResult> {
   const redirectChain: string[] = [targetUrl];
   let context = null;
 
@@ -103,3 +103,6 @@ export async function runUrlSandbox(targetUrl: string): Promise<SandboxResult> {
     };
   }
 }
+
+// Alias export for backwards-compatibility
+export const runUrlSandbox = analyzeSandbox;
