@@ -1,6 +1,22 @@
 import { Router } from "express";
-import { db, scans } from "@workspace/db";
+import { db } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
+import { pgTable, text, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+
+// Direct table definition reference to ensure runtime independence
+const scans = pgTable("scans", {
+  id: text("id").primaryKey(),
+  targetUrl: text("target_url").notNull(),
+  finalUrl: text("final_url"),
+  verdict: text("verdict").notNull(),
+  riskScore: integer("risk_score").notNull(),
+  threatTypes: jsonb("threat_types").$type<string[]>(),
+  threatReasons: jsonb("threat_reasons").$type<string[]>(),
+  redirectChain: jsonb("redirect_chain").$type<string[]>(),
+  domainReputation: jsonb("domain_reputation"),
+  screenshotBase64: text("screenshot_base64"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
 
 const router = Router();
 
