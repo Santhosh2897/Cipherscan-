@@ -26,21 +26,20 @@ object RetrofitClient {
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
 
-            // Only attach API key if explicitly configured
-            if (BuildConfig.API_KEY.isNotBlank() && BuildConfig.API_KEY != "null") {
-                requestBuilder.header("x-api-key", BuildConfig.API_KEY)
+            if (BuildConfig.CIPHERSCAN_API_KEY.isNotBlank() && BuildConfig.CIPHERSCAN_API_KEY != "null") {
+                requestBuilder.header("x-api-key", BuildConfig.CIPHERSCAN_API_KEY)
             }
 
             chain.proceed(requestBuilder.build())
         }
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(45, TimeUnit.SECONDS)
+        .readTimeout(45, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
     private val retrofit: Retrofit by lazy {
-        val baseUrl = BuildConfig.SERVER_URL.ifBlank { DEFAULT_BASE_URL }
-        val sanitizedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        val configuredUrl = BuildConfig.CIPHERSCAN_SERVER_URL.ifBlank { DEFAULT_BASE_URL }
+        val sanitizedUrl = if (configuredUrl.endsWith("/")) configuredUrl else "$configuredUrl/"
 
         Retrofit.Builder()
             .baseUrl(sanitizedUrl)

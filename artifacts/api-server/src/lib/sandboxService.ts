@@ -1,66 +1,74 @@
-import { createHash } from "crypto";
-import path from "path";
-import fs from "fs/promises";
-import { logger } from "./logger";
+import { chromium, Browser } from "playwright";
+import { logger } from "./logger.js";
+
+let browserInstance: Browser | null = null;
+
+async function getBrowser(): Promise<Browser> {
+  if (!browserInstance || !browserInstance.isConnected()) {
+    browserInstance = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-zygote",
+        "--single-process"
+      ]
+    });
+  }
+  return browserInstance;
+}
 
 export interface SandboxResult {
+  screenshotBase64: string | null;
   finalUrl: string;
   redirectChain: string[];
-  previewImageUrl: string | null;
+  pageTitle: string | null;
+  error?: string;
 }
 
-// Try to dynamically import playwright — it's an optional heavy dep
-async function getChromium() {
-  try {
-    const pw = await import("playwright");
-    return pw.chromium;
-  } catch {
-    return null;
-  }
-}
-
-export async function analyzeSandbox(targetUrl: string, serverBaseUrl: string): Promise<SandboxResult> {
-  const chromium = await getChromium();
-
-  if (!chromium) {
-    logger.warn("Playwright not available, skipping sandbox analysis");
-    return {
-      finalUrl: targetUrl,
-      redirectChain: [targetUrl],
-      previewImageUrl: null,
-    };
-  }
-
+export async function runUrlSandbox(targetUrl: string): Promise<SandboxResult> {
   const redirectChain: string[] = [targetUrl];
-  let browser;
+  let context = null;
 
   try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
-
-    const context = await browser.newContext({
-      viewport: { width: 1280, height: 720 },
-      userAgent:
-        "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+    const browser = await getBrowser();
+    context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 CipherScan/1.0",
+      viewport: { width: 1024, height: 600 },
+      ignoreHTTPSErrors: true
     });
 
     const page = await context.newPage();
 
-    // Track redirect chain
-    page.on("request", (req) => {
-      if (req.isNavigationRequest()) {
-        const url = req.url();
-        if (!redirectChain.includes(url)) {
-          redirectChain.push(url);
+    // Abort heavy assets to save memory on 512MB RAM instance
+    await page.route("**/*", (route) => {
+      const resourceType = route.request().resourceType();
+      if (["image", "media", "font"].includes(resourceType)) {
+        return route.abort();
+      }
+      route.continue();
+    });
+
+    page.on("response", (response) => {
+      const status = response.status();
+      const location = response.headers()["location"];
+      if ([301, 302, 303, 307, 308].includes(status) && location) {
+        try {
+          const absolute = new URL(location, response.url()).toString();
+          if (!redirectChain.includes(absolute)) {
+            redirectChain.push(absolute);
+          }
+        } catch {
+          // Ignore invalid URLs
         }
       }
     });
 
     await page.goto(targetUrl, {
-      waitUntil: "networkidle",
-      timeout: 15000,
+      waitUntil: "domcontentloaded",
+      timeout: 10000
     });
 
     const finalUrl = page.url();
@@ -68,32 +76,30 @@ export async function analyzeSandbox(targetUrl: string, serverBaseUrl: string): 
       redirectChain.push(finalUrl);
     }
 
-    // Capture screenshot
-    const hash = createHash("md5").update(targetUrl + Date.now()).digest("hex").slice(0, 12);
-    const previewsDir = path.join(process.cwd(), "public", "previews");
-    await fs.mkdir(previewsDir, { recursive: true });
+    const pageTitle = await page.title().catch(() => null);
 
-    const filename = `${hash}.jpg`;
-    const filepath = path.join(previewsDir, filename);
+    const screenshotBuffer = await page.screenshot({
+      type: "jpeg",
+      quality: 50
+    });
 
-    await page.screenshot({ path: filepath, type: "jpeg", quality: 80, fullPage: false });
     await context.close();
 
-    const previewImageUrl = `${serverBaseUrl}/previews/${filename}`;
-
-    logger.info({ finalUrl, hops: redirectChain.length, previewImageUrl }, "Sandbox analysis complete");
-
-    return { finalUrl, redirectChain, previewImageUrl };
-  } catch (err) {
-    logger.warn({ err, targetUrl }, "Sandbox analysis failed");
     return {
+      screenshotBase64: `data:image/jpeg;base64,${screenshotBuffer.toString("base64")}`,
+      finalUrl,
+      redirectChain,
+      pageTitle
+    };
+  } catch (error: any) {
+    if (context) await context.close().catch(() => {});
+    logger.warn({ error: error.message, targetUrl }, "Sandbox execution fallback triggered");
+    return {
+      screenshotBase64: null,
       finalUrl: targetUrl,
       redirectChain,
-      previewImageUrl: null,
+      pageTitle: null,
+      error: error.message
     };
-  } finally {
-    if (browser) {
-      await browser.close().catch(() => {});
-    }
   }
 }

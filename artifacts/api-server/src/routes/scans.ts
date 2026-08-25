@@ -1,69 +1,50 @@
 import { Router } from "express";
-import { db, scansTable } from "@workspace/db";
-import { eq, desc, count } from "drizzle-orm";
-import { GetScanParams, ListScansQueryParams } from "@workspace/api-zod";
+import { db } from "@workspace/db";
+import { scans } from "@workspace/db/schema";
+import { desc, eq } from "drizzle-orm";
 
 const router = Router();
 
-function formatScan(s: typeof scansTable.$inferSelect) {
-  return {
-    id: s.id,
-    originalUrl: s.originalUrl,
-    finalUrl: s.finalUrl,
-    isSafe: s.isSafe,
-    riskScore: s.riskScore,
-    verdict: s.verdict,
-    threatCategory: s.threatCategory,
-    redirectChain: (() => { try { return JSON.parse(s.redirectChain); } catch { return []; } })(),
-    reasons: (() => { try { return JSON.parse(s.reasons); } catch { return []; } })(),
-    previewImageUrl: s.previewImageUrl,
-    triggerType: s.triggerType,
-    virusTotalScore: s.virusTotalScore,
-    googleSafeBrowsing: s.googleSafeBrowsing,
-    createdAt: s.createdAt.toISOString(),
-  };
-}
+// GET /api/scans — Lists recent scans without heavy screenshot payloads
+router.get("/", async (_req, res) => {
+  try {
+    const results = await db
+      .select({
+        id: scans.id,
+        targetUrl: scans.targetUrl,
+        finalUrl: scans.finalUrl,
+        verdict: scans.verdict,
+        riskScore: scans.riskScore,
+        threatTypes: scans.threatTypes,
+        threatReasons: scans.threatReasons,
+        redirectChain: scans.redirectChain,
+        domainReputation: scans.domainReputation,
+        createdAt: scans.createdAt
+      })
+      .from(scans)
+      .orderBy(desc(scans.createdAt))
+      .limit(50);
 
-router.get("/scans", async (req, res): Promise<void> => {
-  const parsed = ListScansQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
+    return res.json({ scans: results });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
-
-  const { limit = 50, offset = 0, verdict } = parsed.data;
-
-  let query = db.select().from(scansTable).orderBy(desc(scansTable.createdAt)).$dynamic();
-  if (verdict) {
-    query = query.where(eq(scansTable.verdict, verdict));
-  }
-
-  const [items, totalResult] = await Promise.all([
-    query.limit(limit).offset(offset),
-    db.select({ count: count() }).from(scansTable),
-  ]);
-
-  res.json({
-    items: items.map(formatScan),
-    total: totalResult[0]?.count ?? 0,
-  });
 });
 
-router.get("/scans/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params["id"]) ? req.params["id"][0] : req.params["id"];
-  const parsed = GetScanParams.safeParse({ id: parseInt(rawId ?? "0", 10) });
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid scan ID" });
-    return;
-  }
+// GET /api/scans/:id — Returns complete scan data including screenshot
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [scan] = await db.select().from(scans).where(eq(scans.id, id)).limit(1);
 
-  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, parsed.data.id)).limit(1);
-  if (!scan) {
-    res.status(404).json({ error: "Scan not found" });
-    return;
-  }
+    if (!scan) {
+      return res.status(404).json({ error: "Scan not found" });
+    }
 
-  res.json(formatScan(scan));
+    return res.json(scan);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;
