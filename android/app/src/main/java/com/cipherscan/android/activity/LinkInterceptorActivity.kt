@@ -32,17 +32,18 @@ class LinkInterceptorActivity : AppCompatActivity() {
     private fun analyzeLink(url: String) {
         lifecycleScope.launch {
             try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.apiService.analyzeUrl(AnalyzeRequest(url = url))
+                val scanResult = withContext(Dispatchers.IO) {
+                    RetrofitClient.apiService.analyzeUrl(
+                        AnalyzeRequest(
+                            url = url,
+                            targetUrl = url,
+                            triggerType = "CLICK"
+                        )
+                    )
                 }
 
-                if (response.isSuccessful && response.body() != null) {
-                    val scanResult = response.body()!!
-                    val bottomSheet = SecurityOverlayBottomSheet.newInstance(scanResult)
-                    bottomSheet.show(supportFragmentManager, SecurityOverlayBottomSheet.TAG)
-                } else {
-                    showBackendTimeoutDialog(url, "Server returned response code ${response.code()}")
-                }
+                val bottomSheet = SecurityOverlayBottomSheet.newInstance(scanResult)
+                bottomSheet.show(supportFragmentManager, SecurityOverlayBottomSheet.TAG)
             } catch (e: Exception) {
                 showBackendTimeoutDialog(url, e.localizedMessage ?: "Network connection error")
             }

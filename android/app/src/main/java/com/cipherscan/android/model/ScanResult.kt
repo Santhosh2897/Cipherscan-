@@ -1,40 +1,54 @@
 package com.cipherscan.android.model
 
 import android.os.Parcelable
+import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
-/**
- * CipherScan — ScanResult
- *
- * Mirrors the JSON response from:
- *   POST /api/analyze
- *   GET  /api/scans/:id
- *
- * Implements [Parcelable] so it can be bundled into Fragment arguments
- * (e.g. passed into [SecurityOverlayBottomSheet]).
- */
+data class AnalyzeRequest(
+    @SerializedName("url")
+    val url: String,
+    @SerializedName("targetUrl")
+    val targetUrl: String = url,
+    @SerializedName("triggerType")
+    val triggerType: String = "CLICK"
+)
+
 @Parcelize
 data class ScanResult(
-    val id: Int,
-    val originalUrl: String,
-    val finalUrl: String,
-    val isSafe: Boolean,
-    val riskScore: Int,             // 0–100
-    val verdict: String,            // "safe" | "suspicious" | "malicious"
-    val threatCategory: String?,
-    val redirectChain: List<String>,
-    val reasons: List<String>,
-    val previewImageUrl: String?,
-    val triggerType: String,        // "camera" | "link" | "manual"
-    val virusTotalScore: Int?,
-    val googleSafeBrowsing: Boolean,
-    val createdAt: String,          // ISO-8601
+    @SerializedName("id")
+    val id: String? = null,
+    @SerializedName("targetUrl")
+    val targetUrl: String,
+    @SerializedName("finalUrl")
+    val finalUrl: String? = null,
+    @SerializedName("verdict")
+    val verdict: String,
+    @SerializedName("riskScore")
+    val riskScore: Int,
+    @SerializedName("threatTypes")
+    val threatTypes: List<String> = emptyList(),
+    @SerializedName("threatReasons")
+    val threatReasons: List<String> = emptyList(),
+    @SerializedName("redirectChain")
+    val redirectChain: List<String> = emptyList(),
+    @SerializedName("screenshotUrl")
+    val screenshotUrl: String? = null,
+    @SerializedName("domainReputation")
+    val domainReputation: DomainReputation? = null,
+    @SerializedName("scannedAt")
+    val scannedAt: String? = null
 ) : Parcelable
 
-/**
- * Request body sent to POST /api/analyze.
- */
-data class AnalyzeRequest(
-    val targetUrl: String,
-    val triggerType: String,        // "camera" | "link" | "manual"
-)
+@Parcelize
+data class DomainReputation(
+    @SerializedName("domain")
+    val domain: String? = null,
+    @SerializedName("creationDate")
+    val creationDate: String? = null,
+    @SerializedName("registrar")
+    val registrar: String? = null,
+    @SerializedName("virustotalScore")
+    val virustotalScore: Int? = null,
+    @SerializedName("googleSafeBrowsingMatch")
+    val googleSafeBrowsingMatch: Boolean? = null
+) : Parcelable
