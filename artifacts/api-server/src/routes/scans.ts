@@ -39,7 +39,7 @@ router.get("/scans", async (req, res) => {
       .orderBy(desc(scansTable.createdAt))
       .limit(limit);
 
-    return res.json({ scans: results });
+    return res.json({ items: results });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
