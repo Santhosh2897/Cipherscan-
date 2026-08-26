@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  CipherScan — AndroidManifest.xml
-  Intent filters for intercepting web URLs (http/https) and UPI payment intents.
-  Requires Android App Links verification (autoVerify="true") for seamless interception.
--->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cipherscan.android">
 
-    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
@@ -20,12 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CipherScan">
 
-        <!-- ============================================================
-             LinkInterceptorActivity
-             Transparent activity triggered by the OS for every web link
-             and UPI payment intent. Performs background threat analysis,
-             then routes to the target app or shows the security overlay.
-             ============================================================ -->
+        <!-- Link Interceptor Activity -->
         <activity
             android:name=".activity.LinkInterceptorActivity"
             android:exported="true"
@@ -34,32 +24,23 @@
             android:taskAffinity=""
             android:excludeFromRecents="true">
 
-            <!-- HTTP / HTTPS web link interception (Android App Links) -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" />
-            </intent-filter>
-
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
             </intent-filter>
 
-            <!-- UPI deep link interception (payment intents) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="upi" android:host="pay" />
             </intent-filter>
-
         </activity>
 
-        <!-- Main app entry (dashboard) -->
+        <!-- Main Dashboard Activity -->
         <activity
             android:name=".activity.MainActivity"
             android:exported="true"

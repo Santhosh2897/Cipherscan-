@@ -59,7 +59,7 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         val btnProceed = view.findViewById<Button>(R.id.btnProceedAnyway)
         val btnBlock = view.findViewById<Button>(R.id.btnCancel)
 
-        tvUrl?.text = result.targetUrl
+        tvUrl?.text = result.originalUrl ?: result.finalUrl ?: "Unknown URL"
         tvScore?.text = "Risk Score: ${result.riskScore}/100"
 
         val verdictUpper = result.verdict.uppercase()
@@ -80,10 +80,10 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         }
 
         containerReasons?.removeAllViews()
-        val reasonsList = result.threatReasons ?: result.threatTypes ?: emptyList()
+        val reasonsList = result.reasons ?: emptyList()
         if (reasonsList.isEmpty()) {
             val tvEmpty = TextView(context).apply {
-                text = "• No critical threat patterns detected."
+                text = if (verdictUpper == "SAFE") "• No malicious signatures detected." else "• Flagged by threat intelligence scanners."
                 setTextColor(Color.LTGRAY)
                 textSize = 13f
             }
@@ -100,20 +100,20 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        result.screenshotBase64?.let { base64Str ->
-            try {
-                val cleanBase64 = if (base64Str.contains(",")) {
-                    base64Str.substringAfter(",")
-                } else {
-                    base64Str
+        result.previewImageUrl?.let { imgStr ->
+            if (imgStr.startsWith("data:image") || imgStr.length > 100) {
+                try {
+                    val cleanBase64 = if (imgStr.contains(",")) imgStr.substringAfter(",") else imgStr
+                    val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                    if (bitmap != null) {
+                        ivScreenshot?.setImageBitmap(bitmap)
+                        ivScreenshot?.visibility = View.VISIBLE
+                    }
+                } catch (_: Exception) {
+                    ivScreenshot?.visibility = View.GONE
                 }
-                val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                if (bitmap != null) {
-                    ivScreenshot?.setImageBitmap(bitmap)
-                    ivScreenshot?.visibility = View.VISIBLE
-                }
-            } catch (_: Exception) {
+            } else {
                 ivScreenshot?.visibility = View.GONE
             }
         } ?: run {
@@ -126,7 +126,7 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         }
 
         btnProceed?.setOnClickListener {
-            val destination = result.finalUrl ?: result.targetUrl
+            val destination = result.finalUrl ?: result.originalUrl ?: "https://google.com"
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(destination)).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }

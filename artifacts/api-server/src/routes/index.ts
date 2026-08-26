@@ -8,7 +8,7 @@ const router = Router();
 
 router.use(healthRouter);
 router.use(analyzeRouter);
-router.use(scansRouter);
-router.use(statsRouter);
+router.use(statsRouter);   // must come before scansRouter
+router.use(scansRouter);   // has the catch-all /:id — mount last
 
 export default router;

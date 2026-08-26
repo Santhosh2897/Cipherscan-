@@ -4,37 +4,52 @@ import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
 data class AnalyzeRequest(
-    @SerializedName("url")
-    val url: String
+    @SerializedName("targetUrl")
+    val targetUrl: String,
+
+    @SerializedName("triggerType")
+    val triggerType: String = "link"
 ) : Serializable
 
 data class ScanResult(
     @SerializedName("id")
-    val id: String? = null,
+    val id: Any? = null,
 
-    @SerializedName("targetUrl")
-    val targetUrl: String,
+    @SerializedName("originalUrl")
+    val originalUrl: String? = null,
 
     @SerializedName("finalUrl")
     val finalUrl: String? = null,
 
-    @SerializedName("verdict")
-    val verdict: String,
+    @SerializedName("isSafe")
+    val isSafe: Boolean = true,
 
     @SerializedName("riskScore")
-    val riskScore: Int,
+    val riskScore: Int = 0,
 
-    @SerializedName("threatTypes")
-    val threatTypes: List<String>? = null,
+    @SerializedName("verdict")
+    val verdict: String = "safe",
 
-    @SerializedName("threatReasons")
-    val threatReasons: List<String>? = null,
+    @SerializedName("threatCategory")
+    val threatCategory: String? = null,
 
     @SerializedName("redirectChain")
     val redirectChain: List<String>? = null,
 
-    @SerializedName("screenshotBase64")
-    val screenshotBase64: String? = null,
+    @SerializedName("reasons")
+    val reasons: List<String>? = null,
+
+    @SerializedName("previewImageUrl")
+    val previewImageUrl: String? = null,
+
+    @SerializedName("triggerType")
+    val triggerType: String? = null,
+
+    @SerializedName("virusTotalScore")
+    val virusTotalScore: Any? = null,
+
+    @SerializedName("googleSafeBrowsing")
+    val googleSafeBrowsing: Boolean? = null,
 
     @SerializedName("createdAt")
     val createdAt: String? = null

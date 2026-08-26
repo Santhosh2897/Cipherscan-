@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.cipherscan.android.R
@@ -46,30 +47,43 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val request = AnalyzeRequest(url = url)
+                val request = AnalyzeRequest(targetUrl = url, triggerType = "link")
                 val response = RetrofitClient.instance.analyzeUrl(request)
 
                 withContext(Dispatchers.Main) {
+                    if (isFinishing || isDestroyed) return@withContext
                     progressBar?.visibility = View.GONE
+
                     if (response.isSuccessful && response.body() != null) {
                         val scanResult = response.body()!!
                         val bottomSheet = SecurityOverlayBottomSheet.newInstance(scanResult)
                         bottomSheet.show(supportFragmentManager, "SecurityOverlayBottomSheet")
                     } else {
-                        Log.e(TAG, "Analysis failed with code: ${response.code()}")
-                        fallbackOpenUrl(url)
+                        val errBody = response.errorBody()?.string()
+                        Log.e(TAG, "Analysis failed [HTTP ${response.code()}]: $errBody")
+
+                        AlertDialog.Builder(this@LinkInterceptorActivity)
+                            .setTitle("Scan Failed (${response.code()})")
+                            .setMessage(errBody ?: "Server returned error")
+                            .setPositiveButton("Open URL Anyway") { _, _ -> fallbackOpenUrl(url) }
+                            .setNegativeButton("Dismiss") { _, _ -> finish() }
+                            .setCancelable(false)
+                            .show()
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error connecting to backend: ${e.message}", e)
+                Log.e(TAG, "Connection error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
+                    if (isFinishing || isDestroyed) return@withContext
                     progressBar?.visibility = View.GONE
-                    Toast.makeText(
-                        this@LinkInterceptorActivity,
-                        "CipherScan service unreachable, opening link...",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    fallbackOpenUrl(url)
+
+                    AlertDialog.Builder(this@LinkInterceptorActivity)
+                        .setTitle("Connection Error")
+                        .setMessage(e.localizedMessage ?: "Unable to contact scanning server.")
+                        .setPositiveButton("Open URL Anyway") { _, _ -> fallbackOpenUrl(url) }
+                        .setNegativeButton("Dismiss") { _, _ -> finish() }
+                        .setCancelable(false)
+                        .show()
                 }
             }
         }

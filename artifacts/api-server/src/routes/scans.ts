@@ -1,44 +1,43 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, scansTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
-import { pgTable, text, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
-
-// Direct table definition reference to ensure runtime independence
-const scans = pgTable("scans", {
-  id: text("id").primaryKey(),
-  targetUrl: text("target_url").notNull(),
-  finalUrl: text("final_url"),
-  verdict: text("verdict").notNull(),
-  riskScore: integer("risk_score").notNull(),
-  threatTypes: jsonb("threat_types").$type<string[]>(),
-  threatReasons: jsonb("threat_reasons").$type<string[]>(),
-  redirectChain: jsonb("redirect_chain").$type<string[]>(),
-  domainReputation: jsonb("domain_reputation"),
-  screenshotBase64: text("screenshot_base64"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
-});
 
 const router = Router();
 
-// GET /api/scans — Lists recent scans without heavy screenshot payloads
-router.get("/", async (_req, res) => {
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 200;
+
+function parseLimit(raw: unknown): number {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const parsed = parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_LIMIT;
+  return Math.min(parsed, MAX_LIMIT);
+}
+
+router.get("/scans", async (req, res) => {
   try {
+    const limit = parseLimit(req.query.limit);
+
     const results = await db
       .select({
-        id: scans.id,
-        targetUrl: scans.targetUrl,
-        finalUrl: scans.finalUrl,
-        verdict: scans.verdict,
-        riskScore: scans.riskScore,
-        threatTypes: scans.threatTypes,
-        threatReasons: scans.threatReasons,
-        redirectChain: scans.redirectChain,
-        domainReputation: scans.domainReputation,
-        createdAt: scans.createdAt
+        id: scansTable.id,
+        originalUrl: scansTable.originalUrl,
+        finalUrl: scansTable.finalUrl,
+        isSafe: scansTable.isSafe,
+        verdict: scansTable.verdict,
+        riskScore: scansTable.riskScore,
+        threatCategory: scansTable.threatCategory,
+        redirectChain: scansTable.redirectChain,
+        reasons: scansTable.reasons,
+        previewImageUrl: scansTable.previewImageUrl,
+        triggerType: scansTable.triggerType,
+        virusTotalScore: scansTable.virusTotalScore,
+        googleSafeBrowsing: scansTable.googleSafeBrowsing,
+        createdAt: scansTable.createdAt,
       })
-      .from(scans)
-      .orderBy(desc(scans.createdAt))
-      .limit(50);
+      .from(scansTable)
+      .orderBy(desc(scansTable.createdAt))
+      .limit(limit);
 
     return res.json({ scans: results });
   } catch (error: any) {
@@ -46,16 +45,17 @@ router.get("/", async (_req, res) => {
   }
 });
 
-// GET /api/scans/:id — Returns complete scan data including screenshot
-router.get("/:id", async (req, res) => {
+router.get("/scans/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const [scan] = await db.select().from(scans).where(eq(scans.id, id)).limit(1);
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "Invalid scan id" });
+    }
 
+    const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id)).limit(1);
     if (!scan) {
       return res.status(404).json({ error: "Scan not found" });
     }
-
     return res.json(scan);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
