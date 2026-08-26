@@ -1,5 +1,13 @@
 import { chromium, Browser } from "playwright";
+import { createHash } from "crypto";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import { logger } from "./logger.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// public/previews is served as static files by app.ts
+const PREVIEWS_DIR = path.resolve(__dirname, "..", "..", "public", "previews");
 
 let browserInstance: Browser | null = null;
 
@@ -21,14 +29,23 @@ async function getBrowser(): Promise<Browser> {
 }
 
 export interface SandboxResult {
-  screenshotBase64: string | null;
+  /** Publicly accessible URL to the captured screenshot, or null on failure. */
+  previewImageUrl: string | null;
   finalUrl: string;
   redirectChain: string[];
   pageTitle: string | null;
   error?: string;
 }
 
-export async function analyzeSandbox(targetUrl: string): Promise<SandboxResult> {
+/**
+ * Analyzes the target URL in a Playwright sandbox.
+ *
+ * @param targetUrl    - The URL to navigate to.
+ * @param serverBaseUrl - Base URL used to build the previewImageUrl
+ *                        (e.g. "https://cipherscan-api.onrender.com").
+ *                        If empty, falls back to "" (relative path, mainly for local dev).
+ */
+export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Promise<SandboxResult> {
   const redirectChain: string[] = [targetUrl];
   let context = null;
 
@@ -42,13 +59,13 @@ export async function analyzeSandbox(targetUrl: string): Promise<SandboxResult> 
 
     const page = await context.newPage();
 
-    // Abort heavy assets to save memory on 512MB RAM instance
+    // Abort heavy assets to save memory on 512 MB RAM instance
     await page.route("**/*", (route) => {
       const resourceType = route.request().resourceType();
       if (["image", "media", "font"].includes(resourceType)) {
         return route.abort();
       }
-      route.continue();
+      return route.continue();
     });
 
     page.on("response", (response) => {
@@ -85,8 +102,22 @@ export async function analyzeSandbox(targetUrl: string): Promise<SandboxResult> 
 
     await context.close();
 
+    // Derive a stable filename from the URL + a timestamp hash.
+    const hash = createHash("md5")
+      .update(targetUrl + Date.now())
+      .digest("hex");
+    const filename = `${hash}.jpg`;
+
+    // Ensure the previews directory exists before writing.
+    await mkdir(PREVIEWS_DIR, { recursive: true });
+    await writeFile(path.join(PREVIEWS_DIR, filename), screenshotBuffer);
+
+    // Build the public URL for the screenshot.
+    const base = serverBaseUrl.replace(/\/$/, "");
+    const previewImageUrl = `${base}/previews/${filename}`;
+
     return {
-      screenshotBase64: `data:image/jpeg;base64,${screenshotBuffer.toString("base64")}`,
+      previewImageUrl,
       finalUrl,
       redirectChain,
       pageTitle
@@ -95,7 +126,7 @@ export async function analyzeSandbox(targetUrl: string): Promise<SandboxResult> 
     if (context) await context.close().catch(() => {});
     logger.warn({ error: error.message, targetUrl }, "Sandbox execution fallback triggered");
     return {
-      screenshotBase64: null,
+      previewImageUrl: null,
       finalUrl: targetUrl,
       redirectChain,
       pageTitle: null,

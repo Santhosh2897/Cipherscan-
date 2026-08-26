@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  CipherScan — AndroidManifest.xml
-  Intent filters for intercepting web URLs (http/https) and UPI payment intents.
-  Requires Android App Links verification (autoVerify="true") for seamless interception.
+  CipherScan — AndroidManifest.xml (stub reference)
+  The canonical manifest is android/app/src/main/AndroidManifest.xml.
+  This stub is kept for reference only.
+
+  WHY autoVerify IS OMITTED on http/https filters:
+  android:autoVerify="true" requires a specific android:host attribute paired
+  with a hosted /.well-known/assetlinks.json on that exact domain.
+  A wildcard filter (scheme only, no host) will silently fail verification
+  and behave WORSE than omitting autoVerify. For generic link interception
+  the chooser dialog is the correct UX. Restore autoVerify only if a
+  companion domain is registered with a matching assetlinks.json file.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cipherscan.android">
@@ -33,18 +41,12 @@
             android:taskAffinity=""
             android:excludeFromRecents="true">
 
-            <!-- HTTP / HTTPS web link interception (Android App Links) -->
-            <intent-filter android:autoVerify="true">
+            <!-- HTTP + HTTPS web link interception (no autoVerify — see file header) -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" />
-            </intent-filter>
-
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
             </intent-filter>
 

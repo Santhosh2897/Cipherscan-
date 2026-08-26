@@ -15,7 +15,26 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CipherScan">
 
-        <!-- Link Interceptor Activity -->
+        <!-- ============================================================
+             LinkInterceptorActivity
+             Transparent activity triggered by the OS for every web link
+             and UPI payment intent. Performs background threat analysis,
+             then routes to the target app or shows the security overlay.
+
+             WHY autoVerify IS OMITTED on http/https filters:
+             android:autoVerify="true" requires a specific android:host
+             attribute paired with a hosted /.well-known/assetlinks.json
+             file on that exact domain. A wildcard filter with only
+             android:scheme="http" (no host) has undefined verification
+             behaviour — Android will attempt to verify every domain
+             encountered, fail, and silently downgrade the handler to a
+             chooser dialog, which is WORSE than omitting autoVerify.
+
+             For generic link interception the chooser dialog IS the
+             correct UX. If a companion domain (e.g. cipherscan.app) is
+             registered in future, add android:host="cipherscan.app" and
+             restore autoVerify="true" with a matching assetlinks.json.
+             ============================================================ -->
         <activity
             android:name=".activity.LinkInterceptorActivity"
             android:exported="true"
@@ -24,6 +43,11 @@
             android:taskAffinity=""
             android:excludeFromRecents="true">
 
+            <!--
+                HTTP + HTTPS web link interception.
+                No autoVerify — see comment above.
+                Both schemes share a single intent-filter for clarity.
+            -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -32,6 +56,7 @@
                 <data android:scheme="https" />
             </intent-filter>
 
+            <!-- UPI deep link interception (payment intents). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

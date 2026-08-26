@@ -1,23 +1,45 @@
 /**
  * Shared fetch client for the CipherScan backend.
  *
- * Base URL and API key are read from Vite env vars, which must be set in
- * the web dashboard's .env (see artifacts/cipherscan/.env.example):
+ * ## Production (Vercel)
+ *   - Requests go to `/api/...` (same-origin).
+ *   - The Vercel Serverless Function at `api/proxy.ts` forwards them to the
+ *     Render backend and injects `x-api-key` server-side.
+ *   - No API key is ever present in the browser or the public JS bundle.
  *
- *   VITE_API_BASE_URL=http://localhost:8080
- *   VITE_API_KEY=<same value as APP_API_KEY on the backend>
- *
- * The API key requirement was added when /api/* was locked down — without
- * it every request here will get a 401 from the backend.
+ * ## Local development
+ *   - Set `VITE_API_BASE_URL=http://localhost:8080` in .env.
+ *   - Set `VITE_DEV_API_KEY=<same value as APP_API_KEY on the backend>` in .env.
+ *   - Requests go directly to Express; the dev key is added to the header.
+ *   - This key is NOT embedded in Vercel builds (Vite tree-shakes it out when
+ *     the env var is absent at build time).
  */
 
-function getBaseUrl(): string {
-  const url = import.meta.env["VITE_API_BASE_URL"] as string | undefined;
-  return (url ?? "").replace(/\/$/, "");
+/**
+ * Returns true when running in a Vercel production/preview deployment.
+ * Vercel always sets VERCEL_ENV to "production" | "preview" | "development".
+ * We detect it by checking whether the base URL env var is absent (meaning
+ * we're on the deployed site, not running the local Vite dev server).
+ */
+function isProduction(): boolean {
+  const base = import.meta.env["VITE_API_BASE_URL"] as string | undefined;
+  // If VITE_API_BASE_URL is not set, we're in a Vercel deployment —
+  // all /api/* calls route through the BFF proxy on the same origin.
+  return !base || base.trim() === "";
 }
 
-function getApiKey(): string {
-  return (import.meta.env["VITE_API_KEY"] as string | undefined) ?? "";
+function getBaseUrl(): string {
+  if (isProduction()) return ""; // same-origin — Vercel rewrites /api/* to BFF
+  return (import.meta.env["VITE_API_BASE_URL"] as string | undefined ?? "").replace(/\/$/, "");
+}
+
+/**
+ * Returns the API key to include in local dev requests.
+ * Returns an empty string in production — the BFF adds the key server-side.
+ */
+function getDevApiKey(): string {
+  if (isProduction()) return "";
+  return (import.meta.env["VITE_DEV_API_KEY"] as string | undefined) ?? "";
 }
 
 export class ApiError extends Error {
@@ -30,13 +52,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const devKey = getDevApiKey();
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    ...(init?.headers as Record<string, string> ?? {}),
+  };
+
+  // Only attach x-api-key in local dev. In production the BFF does this
+  // server-side so the key never appears in the browser request.
+  if (devKey) {
+    headers["x-api-key"] = devKey;
+  }
+
   const res = await fetch(`${getBaseUrl()}${path}`, {
     ...init,
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": getApiKey(),
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
 
   if (!res.ok) {
