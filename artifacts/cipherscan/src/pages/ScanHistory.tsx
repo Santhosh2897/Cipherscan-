@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useListScans } from '@workspace/api-client-react';
-import { Shield, ShieldAlert, ShieldCheck, ShieldX, Search, Filter } from 'lucide-react';
+import { Shield, Search, Filter, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,24 @@ import { ListScansVerdict } from '@workspace/api-client-react/src/generated/api.
 
 export default function ScanHistory() {
   const [filterVerdict, setFilterVerdict] = useState<ListScansVerdict | ''>('');
-  const { data, isLoading } = useListScans({ limit: 50, verdict: filterVerdict ? filterVerdict as ListScansVerdict : undefined });
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const { data, isLoading } = useListScans({ 
+    limit: 100, 
+    verdict: filterVerdict ? (filterVerdict as ListScansVerdict) : undefined 
+  });
+
+  const filteredItems = (data?.items ?? []).filter((scan) => {
+    if (filterVerdict && scan.verdict !== filterVerdict) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesUrl = scan.originalUrl.toLowerCase().includes(q) || scan.finalUrl.toLowerCase().includes(q);
+      const matchesCategory = (scan.threatCategory ?? '').toLowerCase().includes(q);
+      const matchesVerdict = scan.verdict.toLowerCase().includes(q);
+      if (!matchesUrl && !matchesCategory && !matchesVerdict) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col space-y-4 md:space-y-6 overflow-hidden max-w-7xl mx-auto w-full">
@@ -28,13 +45,15 @@ export default function ScanHistory() {
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
           <Input 
-            placeholder="Search URLs, domains..." 
-            className="pl-9 bg-black/20 border-input/50 focus-visible:ring-primary font-mono text-sm"
+            placeholder="Search URLs, domains, categories..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-black/20 border-input/50 focus-visible:ring-primary font-mono text-xs sm:text-sm"
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
-          <Filter size={16} className="text-muted-foreground mr-2 shrink-0" />
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+          <Filter size={16} className="text-muted-foreground mr-1 shrink-0" />
           <Button 
             variant={filterVerdict === '' ? 'default' : 'outline'} 
             size="sm"
@@ -75,11 +94,11 @@ export default function ScanHistory() {
           <Table>
             <TableHeader className="bg-muted/50 sticky top-0 z-10">
               <TableRow className="border-border/50 hover:bg-transparent">
-                <TableHead className="w-[100px] font-mono text-xs uppercase tracking-widest">Score</TableHead>
-                <TableHead className="w-[140px] font-mono text-xs uppercase tracking-widest">Verdict</TableHead>
-                <TableHead className="font-mono text-xs uppercase tracking-widest">Target URL</TableHead>
-                <TableHead className="w-[150px] font-mono text-xs uppercase tracking-widest">Category</TableHead>
-                <TableHead className="w-[180px] font-mono text-xs uppercase tracking-widest text-right">Scanned At</TableHead>
+                <TableHead className="w-[80px] sm:w-[100px] font-mono text-xs uppercase tracking-widest">Score</TableHead>
+                <TableHead className="w-[120px] sm:w-[140px] font-mono text-xs uppercase tracking-widest">Verdict</TableHead>
+                <TableHead className="font-mono text-xs uppercase tracking-widest min-w-[200px]">Target URL</TableHead>
+                <TableHead className="w-[140px] sm:w-[160px] font-mono text-xs uppercase tracking-widest">Category</TableHead>
+                <TableHead className="w-[160px] sm:w-[180px] font-mono text-xs uppercase tracking-widest text-right">Scanned At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,18 +108,18 @@ export default function ScanHistory() {
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
-              ) : data?.items.length === 0 ? (
+              ) : filteredItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground font-mono">
-                    No scans found.
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground font-mono text-sm">
+                    {searchQuery || filterVerdict ? 'No matching scans found for filter.' : 'No scans recorded yet.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                data?.items.map((scan) => (
+                filteredItems.map((scan) => (
                   <TableRow key={scan.id} className="border-border/50 cursor-pointer hover:bg-muted/30 group">
                     <TableCell>
                       <Link href={`/scans/${scan.id}`}>
-                        <div className="font-mono font-bold text-lg">{scan.riskScore}</div>
+                        <div className="font-mono font-bold text-base sm:text-lg">{scan.riskScore}</div>
                       </Link>
                     </TableCell>
                     <TableCell>
@@ -108,9 +127,9 @@ export default function ScanHistory() {
                         <VerdictBadge verdict={scan.verdict} size="sm" />
                       </Link>
                     </TableCell>
-                    <TableCell className="max-w-[200px] lg:max-w-[400px]">
+                    <TableCell className="max-w-[220px] sm:max-w-[320px] lg:max-w-[450px]">
                       <Link href={`/scans/${scan.id}`} className="block truncate">
-                        <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                        <span className="font-medium text-foreground group-hover:text-primary transition-colors text-xs sm:text-sm">
                           {scan.originalUrl}
                         </span>
                       </Link>
@@ -139,6 +158,3 @@ export default function ScanHistory() {
     </div>
   );
 }
-
-// Needed because the Loader2 import was missing
-import { Loader2 } from 'lucide-react';

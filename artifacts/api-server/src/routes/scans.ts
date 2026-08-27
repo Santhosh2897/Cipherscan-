@@ -17,8 +17,10 @@ function parseLimit(raw: unknown): number {
 router.get("/scans", async (req, res) => {
   try {
     const limit = parseLimit(req.query.limit);
+    const rawVerdict = typeof req.query.verdict === "string" ? req.query.verdict.trim().toLowerCase() : undefined;
+    const isValidVerdict = rawVerdict && ["safe", "suspicious", "malicious"].includes(rawVerdict);
 
-    const results = await db
+    const baseQuery = db
       .select({
         id: scansTable.id,
         originalUrl: scansTable.originalUrl,
@@ -35,9 +37,16 @@ router.get("/scans", async (req, res) => {
         googleSafeBrowsing: scansTable.googleSafeBrowsing,
         createdAt: scansTable.createdAt,
       })
-      .from(scansTable)
-      .orderBy(desc(scansTable.createdAt))
-      .limit(limit);
+      .from(scansTable);
+
+    const results = isValidVerdict
+      ? await baseQuery
+          .where(eq(scansTable.verdict, rawVerdict as "safe" | "suspicious" | "malicious"))
+          .orderBy(desc(scansTable.createdAt))
+          .limit(limit)
+      : await baseQuery
+          .orderBy(desc(scansTable.createdAt))
+          .limit(limit);
 
     return res.json({ items: results });
   } catch (error: any) {
