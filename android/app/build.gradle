@@ -81,4 +81,7 @@ dependencies {
 
     // Image loading — Coil (Kotlin-first, coroutine-aware)
     implementation 'io.coil-kt:coil:2.5.0'
+
+    // Chrome Custom Tabs / Browser Support
+    implementation 'androidx.browser:browser:1.8.0'
 }
