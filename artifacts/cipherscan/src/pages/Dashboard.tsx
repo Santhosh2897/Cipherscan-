@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   if (statsLoading || timelineLoading || threatsLoading || recentLoading) {
     return (
-      <div className="flex-1 p-8 flex items-center justify-center">
+      <div className="flex-1 p-4 flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-4 text-primary">
           <Activity size={32} className="animate-pulse" />
           <span className="font-mono tracking-widest text-sm animate-pulse">GATHERING INTEL...</span>
@@ -31,13 +31,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto space-y-8">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
       <div>
-        <h1 className="text-3xl font-bold font-mono tracking-tight flex items-center gap-3">
-          <Crosshair className="text-primary" />
-          COMMAND CENTER
+        <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
+          <Crosshair className="text-primary shrink-0" size={24} />
+          <span>COMMAND CENTER</span>
         </h1>
-        <p className="text-muted-foreground mt-2">Real-time threat intelligence overview.</p>
+        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">Real-time threat intelligence overview.</p>
       </div>
 
       {stats && (

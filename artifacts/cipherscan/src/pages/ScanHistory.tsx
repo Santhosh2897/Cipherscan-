@@ -15,16 +15,16 @@ export default function ScanHistory() {
   const { data, isLoading } = useListScans({ limit: 50, verdict: filterVerdict ? filterVerdict as ListScansVerdict : undefined });
 
   return (
-    <div className="flex-1 p-8 flex flex-col space-y-6 overflow-hidden">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col space-y-4 md:space-y-6 overflow-hidden max-w-7xl mx-auto w-full">
       <div>
-        <h1 className="text-3xl font-bold font-mono tracking-tight flex items-center gap-3">
-          <Shield className="text-primary" />
-          SCAN HISTORY
+        <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
+          <Shield className="text-primary shrink-0" size={24} />
+          <span>SCAN HISTORY</span>
         </h1>
-        <p className="text-muted-foreground mt-2">Complete log of all inspected URLs and payment strings.</p>
+        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">Complete log of all inspected URLs and payment strings.</p>
       </div>
 
-      <Card className="border-border/50 bg-card/50 backdrop-blur p-4 flex flex-col md:flex-row gap-4 items-center justify-between shrink-0">
+      <Card className="border-border/50 bg-card/50 backdrop-blur p-3 sm:p-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between shrink-0">
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
           <Input 

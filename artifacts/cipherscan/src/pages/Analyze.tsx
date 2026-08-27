@@ -25,26 +25,26 @@ export default function Analyze() {
   };
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto space-y-8 flex flex-col items-center">
-      <div className="w-full max-w-4xl text-center space-y-4 pt-12">
-        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
-          <ScanLine size={32} className="text-primary" />
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8 flex flex-col items-center max-w-5xl mx-auto w-full">
+      <div className="w-full text-center space-y-3 pt-2 md:pt-8">
+        <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-primary/10 border border-primary/20 mb-2">
+          <ScanLine size={28} className="text-primary" />
         </div>
-        <h1 className="text-4xl font-bold font-mono tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-bold font-mono tracking-tight">
           DEEP SCAN <span className="text-primary">ANALYSIS</span>
         </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Submit a URL or UPI payment string for real-time threat analysis. Our engine performs deep inspection including redirect tracing, domain reputation checking, and content analysis.
+        <p className="text-muted-foreground text-xs sm:text-sm max-w-2xl mx-auto px-2">
+          Submit a URL or UPI payment string for real-time threat analysis including redirect tracing, domain reputation checking, and sandbox inspection.
         </p>
       </div>
 
-      <Card className="w-full max-w-4xl border-primary/20 bg-card/50 backdrop-blur shadow-2xl shadow-primary/5">
-        <CardContent className="p-2">
-          <form onSubmit={handleAnalyze} className="flex gap-2">
-            <div className="flex-1 relative flex items-center bg-black/20 rounded-md overflow-hidden border border-input focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
-              <div className="pl-4 pr-2 flex items-center gap-2 border-r border-border/50 text-muted-foreground">
+      <Card className="w-full border-primary/20 bg-card/50 backdrop-blur shadow-2xl shadow-primary/5">
+        <CardContent className="p-2 sm:p-3">
+          <form onSubmit={handleAnalyze} className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1 relative flex flex-col sm:flex-row items-stretch sm:items-center bg-black/20 rounded-md overflow-hidden border border-input focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+              <div className="px-3 py-2 sm:py-0 flex items-center gap-2 border-b sm:border-b-0 sm:border-r border-border/50 text-muted-foreground bg-black/40 sm:bg-transparent">
                 <select 
-                  className="bg-transparent border-none text-xs font-mono uppercase tracking-widest focus:ring-0 cursor-pointer outline-none"
+                  className="bg-transparent border-none text-xs font-mono uppercase tracking-widest focus:ring-0 cursor-pointer outline-none w-full"
                   value={triggerType}
                   onChange={(e) => setTriggerType(e.target.value as AnalyzeInputTriggerType)}
                 >
@@ -55,7 +55,7 @@ export default function Analyze() {
               </div>
               <input 
                 type="text" 
-                className="flex-1 bg-transparent border-none px-4 py-4 focus:outline-none font-mono text-sm placeholder:text-muted-foreground/50"
+                className="flex-1 bg-transparent border-none px-3 py-3 sm:px-4 sm:py-4 focus:outline-none font-mono text-xs sm:text-sm placeholder:text-muted-foreground/50 w-full"
                 placeholder="https://example.com or upi://pay?pa=..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -63,18 +63,17 @@ export default function Analyze() {
             </div>
             <Button 
               type="submit" 
-              size="lg" 
-              className="h-auto py-4 px-8 font-mono tracking-widest font-bold"
               disabled={analyzeMutation.isPending || !url}
+              className="h-auto py-3 sm:py-0 px-6 font-mono font-bold tracking-wider"
             >
               {analyzeMutation.isPending ? (
                 <>
-                  <Loader2 size={18} className="animate-spin mr-2" />
-                  ANALYZING...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ANALYZING
                 </>
               ) : (
                 <>
-                  <Search size={18} className="mr-2" />
+                  <Search className="mr-2 h-4 w-4" />
                   SCAN
                 </>
               )}
