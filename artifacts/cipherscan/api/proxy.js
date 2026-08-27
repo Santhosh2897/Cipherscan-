@@ -1,21 +1,21 @@
 /**
- * CipherScan — Vercel BFF Proxy  (api/proxy.cjs)
+ * CipherScan — Vercel BFF Proxy  (api/proxy.js)
  *
- * .cjs extension is required because artifacts/cipherscan/package.json
- * has "type":"module" — without .cjs, Node.js treats .js files as ESM
- * and module.exports causes a crash (FUNCTION_INVOCATION_FAILED).
+ * Uses ESM syntax (import/export default) because package.json has
+ * "type":"module" — .js files in this package are treated as ESM.
+ * module.exports (CJS) would cause FUNCTION_INVOCATION_FAILED.
  *
- * Forwards all /api/* requests to Render, injecting x-api-key server-side.
+ * Forwards all /api/* requests to Render, injecting x-api-key server-side
+ * so the key is never visible in the browser JS bundle or DevTools.
  *
- * Required Vercel env vars (server-side only, no VITE_ prefix):
+ * Required Vercel env vars (server-side only, NO VITE_ prefix):
  *   BACKEND_URL  — e.g. https://cipherscan-ecjs.onrender.com
  *   APP_API_KEY  — same value as APP_API_KEY on the Render backend
  */
 
-"use strict";
-const https = require("https");
-const http  = require("http");
-const { URL } = require("url");
+import https from "https";
+import http from "http";
+import { URL } from "url";
 
 const HOP_BY_HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate",
@@ -29,11 +29,13 @@ function proxyRequest(options, body) {
     const req = lib.request(options, (res) => {
       const chunks = [];
       res.on("data", (c) => chunks.push(c));
-      res.on("end", () => resolve({
-        status: res.statusCode,
-        headers: res.headers,
-        body: Buffer.concat(chunks).toString(),
-      }));
+      res.on("end", () =>
+        resolve({
+          status: res.statusCode,
+          headers: res.headers,
+          body: Buffer.concat(chunks).toString(),
+        })
+      );
     });
     req.on("error", reject);
     req.setTimeout(28000, () => req.destroy(new Error("Upstream timeout")));
@@ -42,7 +44,7 @@ function proxyRequest(options, body) {
   });
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const backendUrl = process.env.BACKEND_URL;
   const apiKey     = process.env.APP_API_KEY;
 
@@ -58,6 +60,7 @@ module.exports = async function handler(req, res) {
     upstreamUrl = new URL(backendUrl.replace(/\/$/, "") + (req.url || "/"));
   } catch (e) {
     res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ error: "Invalid BACKEND_URL: " + e.message }));
     return;
   }
@@ -105,4 +108,4 @@ module.exports = async function handler(req, res) {
   }
   res.statusCode = upstream.status;
   res.end(upstream.body);
-};
+}
