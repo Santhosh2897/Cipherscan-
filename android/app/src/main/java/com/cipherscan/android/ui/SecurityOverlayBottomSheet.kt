@@ -101,35 +101,33 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        result.previewImageUrl?.let { imgUrl ->
-            if (imgUrl.isNotBlank()) {
-                if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) {
-                    ivScreenshot?.visibility = View.VISIBLE
-                    ivScreenshot?.load(imgUrl) {
-                        crossfade(true)
-                        listener(
-                            onError = { _, _ -> ivScreenshot.visibility = View.GONE }
-                        )
+        val previewUrl = result.previewImageUrl
+        if (!previewUrl.isNullOrBlank()) {
+            if (previewUrl.startsWith("http://") || previewUrl.startsWith("https://")) {
+                ivScreenshot?.visibility = View.VISIBLE
+                ivScreenshot?.load(previewUrl)
+            } else if (previewUrl.startsWith("data:image") || previewUrl.length > 100) {
+                try {
+                    val cleanBase64 = if (previewUrl.contains(",")) {
+                        previewUrl.substringAfter(",")
+                    } else {
+                        previewUrl
                     }
-                } else if (imgUrl.startsWith("data:image") || imgUrl.length > 100) {
-                    try {
-                        val cleanBase64 = if (imgUrl.contains(",")) imgUrl.substringAfter(",") else imgUrl
-                        val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-                        val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                        if (bitmap != null) {
-                            ivScreenshot?.setImageBitmap(bitmap)
-                            ivScreenshot?.visibility = View.VISIBLE
-                        }
-                    } catch (_: Exception) {
+                    val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                    if (bitmap != null) {
+                        ivScreenshot?.setImageBitmap(bitmap)
+                        ivScreenshot?.visibility = View.VISIBLE
+                    } else {
                         ivScreenshot?.visibility = View.GONE
                     }
-                } else {
+                } catch (_: Exception) {
                     ivScreenshot?.visibility = View.GONE
                 }
             } else {
                 ivScreenshot?.visibility = View.GONE
             }
-        } ?: run {
+        } else {
             ivScreenshot?.visibility = View.GONE
         }
 
