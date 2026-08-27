@@ -1,111 +1,72 @@
 /**
- * CipherScan — Vercel BFF Proxy  (api/proxy.js)
+ * CipherScan — Vercel BFF Proxy (api/proxy.js)
  *
- * Uses ESM syntax (import/export default) because package.json has
- * "type":"module" — .js files in this package are treated as ESM.
- * module.exports (CJS) would cause FUNCTION_INVOCATION_FAILED.
- *
- * Forwards all /api/* requests to Render, injecting x-api-key server-side
- * so the key is never visible in the browser JS bundle or DevTools.
- *
- * Required Vercel env vars (server-side only, NO VITE_ prefix):
- *   BACKEND_URL  — e.g. https://cipherscan-ecjs.onrender.com
- *   APP_API_KEY  — same value as APP_API_KEY on the Render backend
+ * Forwards all /api/* requests to the Render backend, injecting x-api-key
+ * server-side so the key is never exposed to the client browser.
  */
-
-import https from "https";
-import http from "http";
-import { URL } from "url";
-
-const HOP_BY_HOP = new Set([
-  "connection", "keep-alive", "proxy-authenticate",
-  "proxy-authorization", "te", "trailers",
-  "transfer-encoding", "upgrade", "host",
-]);
-
-function proxyRequest(options, body) {
-  return new Promise((resolve, reject) => {
-    const lib = options.protocol === "https:" ? https : http;
-    const req = lib.request(options, (res) => {
-      const chunks = [];
-      res.on("data", (c) => chunks.push(c));
-      res.on("end", () =>
-        resolve({
-          status: res.statusCode,
-          headers: res.headers,
-          body: Buffer.concat(chunks).toString(),
-        })
-      );
-    });
-    req.on("error", reject);
-    req.setTimeout(28000, () => req.destroy(new Error("Upstream timeout")));
-    if (body) req.write(body);
-    req.end();
-  });
-}
 
 export default async function handler(req, res) {
   const backendUrl = process.env.BACKEND_URL;
-  const apiKey     = process.env.APP_API_KEY;
+  const apiKey = process.env.APP_API_KEY;
 
   if (!backendUrl) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "BACKEND_URL is not configured." }));
-    return;
+    return res.status(500).json({ error: "BACKEND_URL is not configured." });
   }
 
-  let upstreamUrl;
-  try {
-    upstreamUrl = new URL(backendUrl.replace(/\/$/, "") + (req.url || "/"));
-  } catch (e) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Invalid BACKEND_URL: " + e.message }));
-    return;
-  }
+  const upstream = `${backendUrl.replace(/\/$/, "")}${req.url || "/"}`;
 
-  // Build forwarded headers, strip hop-by-hop, inject API key
   const forwardHeaders = {};
+  const skipHeaders = new Set([
+    "host",
+    "connection",
+    "keep-alive",
+    "transfer-encoding",
+    "upgrade",
+  ]);
+
   for (const [k, v] of Object.entries(req.headers || {})) {
-    if (!HOP_BY_HOP.has(k.toLowerCase()) && typeof v === "string") {
+    if (!skipHeaders.has(k.toLowerCase()) && typeof v === "string") {
       forwardHeaders[k] = v;
     }
   }
-  if (apiKey) forwardHeaders["x-api-key"] = apiKey;
 
-  let body;
-  if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
-    body = JSON.stringify(req.body);
-    forwardHeaders["content-type"]   = forwardHeaders["content-type"] || "application/json";
-    forwardHeaders["content-length"] = Buffer.byteLength(body).toString();
+  if (apiKey) {
+    forwardHeaders["x-api-key"] = apiKey;
   }
 
-  const options = {
-    protocol: upstreamUrl.protocol,
-    hostname: upstreamUrl.hostname,
-    port:     upstreamUrl.port || (upstreamUrl.protocol === "https:" ? 443 : 80),
-    path:     upstreamUrl.pathname + upstreamUrl.search,
-    method:   req.method || "GET",
-    headers:  forwardHeaders,
-  };
-
-  let upstream;
   try {
-    upstream = await proxyRequest(options, body);
-  } catch (err) {
-    res.statusCode = 502;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Proxy upstream error: " + err.message }));
-    return;
-  }
-
-  // Forward safe response headers
-  for (const [k, v] of Object.entries(upstream.headers)) {
-    if (!HOP_BY_HOP.has(k.toLowerCase())) {
-      try { res.setHeader(k, v); } catch (_) {}
+    let body;
+    if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
+      body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+      forwardHeaders["content-type"] = forwardHeaders["content-type"] || "application/json";
     }
+
+    const upstreamRes = await fetch(upstream, {
+      method: req.method || "GET",
+      headers: forwardHeaders,
+      body,
+      redirect: "manual",
+    });
+
+    const data = await upstreamRes.arrayBuffer();
+
+    // Copy response headers except compression headers that fetch already decoded
+    upstreamRes.headers.forEach((val, key) => {
+      const lower = key.toLowerCase();
+      if (
+        lower !== "content-encoding" &&
+        lower !== "content-length" &&
+        lower !== "transfer-encoding" &&
+        lower !== "connection"
+      ) {
+        res.setHeader(key, val);
+      }
+    });
+
+    res.status(upstreamRes.status);
+    return res.send(Buffer.from(data));
+  } catch (err) {
+    return res.status(502).json({ error: "Proxy upstream error: " + err.message });
   }
-  res.statusCode = upstream.status;
-  res.end(upstream.body);
 }
+
