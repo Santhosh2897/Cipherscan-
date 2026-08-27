@@ -138,10 +138,33 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
 
         btnProceed?.setOnClickListener {
             val destination = result.finalUrl ?: result.originalUrl ?: "https://google.com"
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(destination)).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val uri = Uri.parse(destination)
+            val ctx = context
+            if (ctx != null) {
+                try {
+                    val baseIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        addCategory(Intent.CATEGORY_BROWSABLE)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    val resolveInfos = ctx.packageManager.queryIntentActivities(baseIntent, 0)
+                    val target = resolveInfos.firstOrNull { it.activityInfo.packageName != ctx.packageName }
+
+                    if (target != null) {
+                        val launchIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                            setClassName(target.activityInfo.packageName, target.activityInfo.name)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        startActivity(launchIntent)
+                    } else {
+                        startActivity(baseIntent)
+                    }
+                } catch (_: Exception) {
+                    val fallback = Intent(Intent.ACTION_VIEW, uri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(fallback)
+                }
             }
-            startActivity(browserIntent)
             dismiss()
             activity?.finish()
         }

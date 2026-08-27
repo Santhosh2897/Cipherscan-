@@ -91,10 +91,24 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
     private fun fallbackOpenUrl(url: String) {
         try {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            val uri = Uri.parse(url)
+            val baseIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                addCategory(Intent.CATEGORY_BROWSABLE)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-            startActivity(browserIntent)
+
+            val resolveInfos = packageManager.queryIntentActivities(baseIntent, 0)
+            val target = resolveInfos.firstOrNull { it.activityInfo.packageName != packageName }
+
+            if (target != null) {
+                val launchIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                    setClassName(target.activityInfo.packageName, target.activityInfo.name)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                startActivity(launchIntent)
+            } else {
+                startActivity(baseIntent)
+            }
         } catch (_: Exception) {
             Toast.makeText(this, "Unable to open browser", Toast.LENGTH_SHORT).show()
         } finally {
