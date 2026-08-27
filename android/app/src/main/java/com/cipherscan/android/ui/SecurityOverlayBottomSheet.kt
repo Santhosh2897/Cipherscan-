@@ -139,34 +139,38 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         btnProceed?.setOnClickListener {
             val destination = result.finalUrl ?: result.originalUrl ?: "https://google.com"
             val uri = Uri.parse(destination)
-            val ctx = context
-            if (ctx != null) {
+            val act = activity
+            if (act != null && !act.isFinishing) {
                 try {
                     val baseIntent = Intent(Intent.ACTION_VIEW, uri).apply {
                         addCategory(Intent.CATEGORY_BROWSABLE)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
-                    val resolveInfos = ctx.packageManager.queryIntentActivities(baseIntent, 0)
-                    val target = resolveInfos.firstOrNull { it.activityInfo.packageName != ctx.packageName }
+                    val resolveInfos = act.packageManager.queryIntentActivities(baseIntent, 0)
+                    val target = resolveInfos.firstOrNull { it.activityInfo.packageName != act.packageName }
 
                     if (target != null) {
-                        val launchIntent = Intent(Intent.ACTION_VIEW, uri).apply {
-                            setClassName(target.activityInfo.packageName, target.activityInfo.name)
+                        baseIntent.setPackage(target.activityInfo.packageName)
+                        act.startActivity(baseIntent)
+                    } else {
+                        val chooser = Intent.createChooser(baseIntent, "Open with").apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         }
-                        startActivity(launchIntent)
-                    } else {
-                        startActivity(baseIntent)
+                        act.startActivity(chooser)
                     }
-                } catch (_: Exception) {
-                    val fallback = Intent(Intent.ACTION_VIEW, uri).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                    startActivity(fallback)
+                } catch (e: Exception) {
+                    try {
+                        val fallback = Intent(Intent.ACTION_VIEW, uri).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        act.startActivity(fallback)
+                    } catch (_: Exception) {}
                 }
             }
-            dismiss()
-            activity?.finish()
+            try {
+                dismissAllowingStateLoss()
+            } catch (_: Exception) {}
+            act?.finish()
         }
     }
 }
