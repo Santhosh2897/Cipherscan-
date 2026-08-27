@@ -10,28 +10,52 @@
  *   APP_API_KEY  — same value as APP_API_KEY on the Render backend
  */
 
-// Headers that must not be forwarded between hops (RFC 2616 §13.5.1)
+const https = require("https");
+const http  = require("http");
+const { URL } = require("url");
+
+// Headers that must not be forwarded between hops
 const HOP_BY_HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate",
   "proxy-authorization", "te", "trailers",
   "transfer-encoding", "upgrade", "host",
 ]);
 
-/** @param {import('@vercel/node').VercelRequest} req @param {import('@vercel/node').VercelResponse} res */
+function proxyRequest(options, body) {
+  return new Promise((resolve, reject) => {
+    const lib = options.protocol === "https:" ? https : http;
+    const req = lib.request(options, (res) => {
+      const chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks).toString() }));
+    });
+    req.on("error", reject);
+    req.setTimeout(30000, () => { req.destroy(new Error("Upstream timeout")); });
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
 module.exports = async function handler(req, res) {
   const backendUrl = process.env.BACKEND_URL;
   const apiKey     = process.env.APP_API_KEY;
 
   if (!backendUrl) {
-    return res.status(500).json({ error: "BACKEND_URL is not configured." });
+    res.status(500).json({ error: "BACKEND_URL is not configured." });
+    return;
   }
 
-  // req.url is the full path Vercel received, e.g. /api/stats?limit=10
-  const upstream = `${backendUrl.replace(/\/$/, "")}${req.url || "/"}`;
+  let upstreamUrl;
+  try {
+    upstreamUrl = new URL(backendUrl.replace(/\/$/, "") + (req.url || "/"));
+  } catch (e) {
+    res.status(500).json({ error: "Invalid BACKEND_URL: " + e.message });
+    return;
+  }
 
-  // Build forwarded headers — strip hop-by-hop, inject x-api-key
+  // Build forwarded headers
   const forwardHeaders = {};
-  for (const [k, v] of Object.entries(req.headers)) {
+  for (const [k, v] of Object.entries(req.headers || {})) {
     if (!HOP_BY_HOP.has(k.toLowerCase()) && typeof v === "string") {
       forwardHeaders[k] = v;
     }
@@ -42,30 +66,33 @@ module.exports = async function handler(req, res) {
   let body;
   if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
     body = JSON.stringify(req.body);
-    if (!forwardHeaders["content-type"]) {
-      forwardHeaders["content-type"] = "application/json";
+    forwardHeaders["content-type"]   = forwardHeaders["content-type"] || "application/json";
+    forwardHeaders["content-length"] = Buffer.byteLength(body).toString();
+  }
+
+  const options = {
+    protocol: upstreamUrl.protocol,
+    hostname: upstreamUrl.hostname,
+    port:     upstreamUrl.port || (upstreamUrl.protocol === "https:" ? 443 : 80),
+    path:     upstreamUrl.pathname + upstreamUrl.search,
+    method:   req.method || "GET",
+    headers:  forwardHeaders,
+  };
+
+  let upstream;
+  try {
+    upstream = await proxyRequest(options, body);
+  } catch (err) {
+    res.status(502).json({ error: "Proxy upstream error: " + err.message });
+    return;
+  }
+
+  // Forward safe response headers
+  for (const [k, v] of Object.entries(upstream.headers)) {
+    if (!HOP_BY_HOP.has(k.toLowerCase())) {
+      try { res.setHeader(k, v); } catch (_) {}
     }
   }
 
-  let upstreamRes;
-  try {
-    upstreamRes = await fetch(upstream, {
-      method: req.method || "GET",
-      headers: forwardHeaders,
-      body,
-      redirect: "manual",
-      signal: AbortSignal.timeout(30_000),
-    });
-  } catch (err) {
-    return res.status(502).json({ error: `Proxy upstream error: ${err.message}` });
-  }
-
-  // Forward response headers
-  upstreamRes.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) res.setHeader(key, value);
-  });
-
-  res.status(upstreamRes.status);
-  const text = await upstreamRes.text();
-  res.send(text);
+  res.status(upstream.status).send(upstream.body);
 };
