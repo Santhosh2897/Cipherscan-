@@ -112,9 +112,9 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                   <div className="p-4 rounded-md border border-border/50 bg-black/20">
                     <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground mb-2">Safe Browsing</p>
                     <div className="flex items-center gap-2">
-                      <Shield size={16} className={scan.googleSafeBrowsing ? "text-emerald-500" : "text-destructive"} />
+                      <Shield size={16} className={scan.googleSafeBrowsing ? "text-destructive" : "text-emerald-500"} />
                       <span className="font-mono text-sm">
-                        {scan.googleSafeBrowsing ? 'Clean' : 'Flagged'}
+                        {scan.googleSafeBrowsing ? 'Flagged' : 'Clean'}
                       </span>
                     </div>
                   </div>

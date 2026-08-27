@@ -16,6 +16,7 @@ import android.widget.TextView
 import com.cipherscan.android.R
 import com.cipherscan.android.model.ScanResult
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import coil.load
 
 class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
 
@@ -100,17 +101,29 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        result.previewImageUrl?.let { imgStr ->
-            if (imgStr.startsWith("data:image") || imgStr.length > 100) {
-                try {
-                    val cleanBase64 = if (imgStr.contains(",")) imgStr.substringAfter(",") else imgStr
-                    val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-                    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                    if (bitmap != null) {
-                        ivScreenshot?.setImageBitmap(bitmap)
-                        ivScreenshot?.visibility = View.VISIBLE
+        result.previewImageUrl?.let { imgUrl ->
+            if (imgUrl.isNotBlank()) {
+                if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) {
+                    ivScreenshot?.visibility = View.VISIBLE
+                    ivScreenshot?.load(imgUrl) {
+                        crossfade(true)
+                        listener(
+                            onError = { _, _ -> ivScreenshot.visibility = View.GONE }
+                        )
                     }
-                } catch (_: Exception) {
+                } else if (imgUrl.startsWith("data:image") || imgUrl.length > 100) {
+                    try {
+                        val cleanBase64 = if (imgUrl.contains(",")) imgUrl.substringAfter(",") else imgUrl
+                        val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+                        val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                        if (bitmap != null) {
+                            ivScreenshot?.setImageBitmap(bitmap)
+                            ivScreenshot?.visibility = View.VISIBLE
+                        }
+                    } catch (_: Exception) {
+                        ivScreenshot?.visibility = View.GONE
+                    }
+                } else {
                     ivScreenshot?.visibility = View.GONE
                 }
             } else {

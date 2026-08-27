@@ -33,6 +33,14 @@ export function isPrivateOrReservedHost(hostname: string): boolean {
 }
 
 export function assertUrlIsSafe(urlString: string): URL {
+  if (urlString.startsWith("upi://")) {
+    try {
+      return new URL(urlString);
+    } catch {
+      throw new UnsafeUrlError("Malformed or invalid UPI payment format");
+    }
+  }
+
   let parsedUrl: URL;
   try {
     parsedUrl = new URL(urlString);

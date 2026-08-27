@@ -47,6 +47,16 @@ export interface SandboxResult {
  */
 export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Promise<SandboxResult> {
   const redirectChain: string[] = [targetUrl];
+
+  if (targetUrl.startsWith("upi://")) {
+    return {
+      previewImageUrl: null,
+      finalUrl: targetUrl,
+      redirectChain,
+      pageTitle: "UPI Payment URI",
+    };
+  }
+
   let context = null;
 
   try {
