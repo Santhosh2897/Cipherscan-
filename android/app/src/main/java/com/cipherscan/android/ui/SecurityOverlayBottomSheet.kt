@@ -131,6 +131,14 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
             ivScreenshot?.visibility = View.GONE
         }
 
+        val btnDashboard = view.findViewById<Button>(R.id.btnViewOnWebDashboard)
+        btnDashboard?.setOnClickListener {
+            val act = activity
+            if (act != null) {
+                BrowserLauncher.openUrl(act, "https://cipherscan-dashboard.vercel.app/scans")
+            }
+        }
+
         btnBlock?.setOnClickListener {
             dismiss()
             activity?.finish()

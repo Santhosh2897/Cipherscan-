@@ -116,5 +116,16 @@
                 android:text="Proceed"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
+
+        <!-- Direct Web Dashboard Link -->
+        <Button
+            android:id="@+id/btnViewOnWebDashboard"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Open in Web Dashboard ↗"
+            android:textColor="#38BDF8"
+            android:textSize="13sp" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
