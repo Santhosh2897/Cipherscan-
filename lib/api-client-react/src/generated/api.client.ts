@@ -22,14 +22,14 @@
  * we're on the deployed site, not running the local Vite dev server).
  */
 function isProduction(): boolean {
+  // In production builds (Vercel), always use same-origin BFF proxy
+  if (import.meta.env.PROD) return true;
   const base = import.meta.env["VITE_API_BASE_URL"] as string | undefined;
-  // If VITE_API_BASE_URL is not set, we're in a Vercel deployment —
-  // all /api/* calls route through the BFF proxy on the same origin.
   return !base || base.trim() === "";
 }
 
 function getBaseUrl(): string {
-  if (isProduction()) return ""; // same-origin — Vercel rewrites /api/* to BFF
+  if (isProduction()) return ""; // same-origin — Vercel rewrites /api/* to BFF proxy
   return (import.meta.env["VITE_API_BASE_URL"] as string | undefined ?? "").replace(/\/$/, "");
 }
 

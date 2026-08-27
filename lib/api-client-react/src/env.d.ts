@@ -1,4 +1,6 @@
 interface ImportMetaEnv {
+  readonly PROD?: boolean;
+  readonly DEV?: boolean;
   /** Backend base URL for LOCAL DEV direct calls (e.g. http://localhost:8080). */
   readonly VITE_API_BASE_URL?: string;
   /**
