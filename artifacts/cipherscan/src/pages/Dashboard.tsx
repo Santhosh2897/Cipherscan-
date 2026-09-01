@@ -145,34 +145,40 @@ export default function Dashboard() {
           </Link>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-border/50">
-            {recentScans?.items.map((scan) => (
-              <Link 
-                key={scan.id} 
-                href={`/scans/${scan.id}`}
-                className="block p-4 flex items-center justify-between hover:bg-muted/20 transition-colors cursor-pointer group"
-              >
-                  <div className="flex items-center gap-4 truncate">
-                    <VerdictBadge verdict={scan.verdict} size="sm" className="shrink-0" />
-                    <div className="truncate space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                          {scan.originalUrl}
+          {(!recentScans?.items || recentScans.items.length === 0) ? (
+            <div className="p-8 text-center text-muted-foreground font-mono text-sm">
+              No recent scans recorded yet. Use Deep Scan or scan from an Android phone to see live activity.
+            </div>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {recentScans.items.map((scan) => (
+                <Link 
+                  key={scan.id} 
+                  href={`/scans/${scan.id}`}
+                  className="block p-4 flex items-center justify-between hover:bg-muted/20 transition-colors cursor-pointer group"
+                >
+                    <div className="flex items-center gap-4 truncate">
+                      <VerdictBadge verdict={scan.verdict} size="sm" className="shrink-0" />
+                      <div className="truncate space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                            {scan.originalUrl}
+                          </p>
+                          {getSourceBadge(scan.triggerType, scan.deviceName)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(scan.createdAt).toLocaleString()}
                         </p>
-                        {getSourceBadge(scan.triggerType, scan.deviceName)}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(scan.createdAt).toLocaleString()}
-                      </p>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right ml-4">
-                    <div className="text-xl font-mono font-bold">{scan.riskScore}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Score</div>
-                  </div>
-              </Link>
-            ))}
-          </div>
+                    <div className="shrink-0 text-right ml-4">
+                      <div className="text-xl font-mono font-bold">{scan.riskScore}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Score</div>
+                    </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
