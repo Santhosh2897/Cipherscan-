@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, scansTable } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -14,11 +14,31 @@ function parseLimit(raw: unknown): number {
   return Math.min(parsed, MAX_LIMIT);
 }
 
+function safeParseJsonArray(input: string | null | undefined): string[] {
+  if (!input) return [];
+  try {
+    const parsed = typeof input === "string" ? JSON.parse(input) : input;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function formatScanRecord(scan: any) {
+  return {
+    ...scan,
+    redirectChain: safeParseJsonArray(scan.redirectChain),
+    reasons: safeParseJsonArray(scan.reasons),
+    createdAt: scan.createdAt instanceof Date ? scan.createdAt.toISOString() : scan.createdAt,
+  };
+}
+
 router.get("/scans", async (req, res) => {
   try {
     const limit = parseLimit(req.query.limit);
     const rawVerdict = typeof req.query.verdict === "string" ? req.query.verdict.trim().toLowerCase() : undefined;
     const isValidVerdict = rawVerdict && ["safe", "suspicious", "malicious"].includes(rawVerdict);
+    const deviceIdParam = typeof req.query.deviceId === "string" && req.query.deviceId.trim() !== "" ? req.query.deviceId.trim() : undefined;
 
     const baseQuery = db
       .select({
@@ -33,22 +53,32 @@ router.get("/scans", async (req, res) => {
         reasons: scansTable.reasons,
         previewImageUrl: scansTable.previewImageUrl,
         triggerType: scansTable.triggerType,
+        deviceId: scansTable.deviceId,
+        deviceName: scansTable.deviceName,
         virusTotalScore: scansTable.virusTotalScore,
         googleSafeBrowsing: scansTable.googleSafeBrowsing,
         createdAt: scansTable.createdAt,
       })
       .from(scansTable);
 
-    const results = isValidVerdict
+    const conditions = [];
+    if (isValidVerdict) {
+      conditions.push(eq(scansTable.verdict, rawVerdict as "safe" | "suspicious" | "malicious"));
+    }
+    if (deviceIdParam) {
+      conditions.push(eq(scansTable.deviceId, deviceIdParam));
+    }
+
+    const results = conditions.length > 0
       ? await baseQuery
-          .where(eq(scansTable.verdict, rawVerdict as "safe" | "suspicious" | "malicious"))
+          .where(conditions.length === 1 ? conditions[0] : and(...conditions))
           .orderBy(desc(scansTable.createdAt))
           .limit(limit)
       : await baseQuery
           .orderBy(desc(scansTable.createdAt))
           .limit(limit);
 
-    return res.json({ items: results });
+    return res.json({ items: results.map(formatScanRecord) });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -65,7 +95,7 @@ router.get("/scans/:id", async (req, res) => {
     if (!scan) {
       return res.status(404).json({ error: "Scan not found" });
     }
-    return res.json(scan);
+    return res.json(formatScanRecord(scan));
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

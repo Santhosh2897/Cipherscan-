@@ -24,16 +24,24 @@ android/
         │   ├── activity/                 ── Android Activities ──────────────
         │   │   ├── index.kt              Package description
         │   │   └── LinkInterceptorActivity.kt
-        │   │       Transparent OS-triggered activity. Calls POST /api/analyze,
-        │   │       then routes: safe → target app, threat → overlay.
+        │   │       Transparent OS-triggered activity. Validates web schemes (http/https/upi),
+        │   │       ignores media intents (WhatsApp photo send), calls POST /api/analyze,
+        │   │       and routes safe links or displays threat overlay.
         │   │
         │   ├── ui/                       ── UI Components ───────────────────
         │   │   ├── index.kt              Package description
+        │   │   ├── BrowserLauncher.kt
+        │   │   │   Launches verified links in a standalone Chrome browser task
+        │   │   │   (FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_NEW_DOCUMENT) so open
+        │   │   │   links persist in Recent Apps.
         │   │   ├── SecurityOverlayBottomSheet.kt
-        │   │   │   BottomSheetDialogFragment. Risk gauge, screenshot, redirect
+        │   │   │   BottomSheetDialogFragment. Risk gauge, screenshot preview, redirect
         │   │   │   chain, threat reasons, Abort / Proceed buttons.
         │   │   └── RiskGaugeView.kt
         │   │       Custom semicircular arc View. Animated, color-coded 0–100.
+        │   │
+        │   ├── util/                     ── Utilities ───────────────────────
+        │   │   └── DeviceUtils.kt        Generates persistent deviceId UUID & hardware model name.
         │   │
         │   ├── api/                      ── Network Layer ───────────────────
         │   │   ├── index.kt              Package description
@@ -42,7 +50,7 @@ android/
         │   │
         │   └── model/                    ── Data Models ─────────────────────
         │       ├── index.kt              Package description
-        │       └── ScanResult.kt         Parcelable response + AnalyzeRequest
+        │       └── ScanResult.kt         Parcelable response + AnalyzeRequest (with deviceId & deviceName)
         │
         └── res/
             ├── layout/

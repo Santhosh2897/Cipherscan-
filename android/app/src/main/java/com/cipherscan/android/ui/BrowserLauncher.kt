@@ -44,52 +44,33 @@ object BrowserLauncher {
         val targetBrowser = findBrowserPackage(context)
         Log.d(TAG, "Resolved target browser: $targetBrowser for URL: $destination")
 
-        // 1. Try launching with Chrome Custom Tabs (CCT)
-        try {
-            val customTabsIntent = CustomTabsIntent.Builder()
-                .setShowTitle(true)
-                .build()
-
-            if (targetBrowser != null) {
-                customTabsIntent.intent.setPackage(targetBrowser)
-            }
-            if (context !is Activity) {
-                customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            customTabsIntent.launchUrl(context, uri)
-            return
-        } catch (e: Exception) {
-            Log.w(TAG, "CustomTabs launch failed, falling back to standard Intent: ${e.message}")
-        }
-
-        // 2. Standard Intent with explicit browser package
+        // 1. Launch standalone external browser intent (creates separate Chrome task in Recents)
         try {
             val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
                 addCategory(Intent.CATEGORY_BROWSABLE)
                 if (targetBrowser != null) {
                     setPackage(targetBrowser)
                 }
-                if (context !is Activity) {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             }
             context.startActivity(browserIntent)
             return
         } catch (e: Exception) {
-            Log.w(TAG, "Explicit browser launch failed: ${e.message}")
+            Log.w(TAG, "Explicit standalone browser launch failed: ${e.message}")
         }
 
-        // 3. Fallback to generic chooser
+        // 2. Fallback to generic chooser intent with standalone task flags
         try {
             val fallbackIntent = Intent(Intent.ACTION_VIEW, uri).apply {
-                if (context !is Activity) {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
+                addCategory(Intent.CATEGORY_BROWSABLE)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             }
-            val chooser = Intent.createChooser(fallbackIntent, "Open with").apply {
-                if (context !is Activity) {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
+            val chooser = Intent.createChooser(fallbackIntent, "Open link with").apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(chooser)
         } catch (e: Exception) {

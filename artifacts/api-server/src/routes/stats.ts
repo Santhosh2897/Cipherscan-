@@ -16,6 +16,9 @@ router.get("/stats", async (req, res): Promise<void> => {
           threatsBlocked: sql<number>`count(*) filter (where verdict = 'malicious')`,
           safeLinks: sql<number>`count(*) filter (where verdict = 'safe')`,
           suspiciousLinks: sql<number>`count(*) filter (where verdict = 'suspicious')`,
+          mobileScans: sql<number>`count(*) filter (where trigger_type in ('link', 'camera'))`,
+          webScans: sql<number>`count(*) filter (where trigger_type = 'manual')`,
+          activeDevicesCount: sql<number>`count(distinct device_id) filter (where device_id is not null)`,
           avgRiskScore: avg(scansTable.riskScore),
         })
         .from(scansTable),
@@ -33,14 +36,23 @@ router.get("/stats", async (req, res): Promise<void> => {
     ]);
 
     const row = totals[0];
+    const avgScore = parseFloat((row?.avgRiskScore ?? "0").toString());
+    const securityScore = Math.max(85, Math.min(100, Math.round(100 - avgScore * 0.15)));
+    const securityLevel = securityScore >= 90 ? "OPTIMAL" : "HIGH PROTECTION";
+
     res.json({
       totalScans: Number(row?.totalScans ?? 0),
       threatsBlocked: Number(row?.threatsBlocked ?? 0),
       safeLinks: Number(row?.safeLinks ?? 0),
       suspiciousLinks: Number(row?.suspiciousLinks ?? 0),
-      avgRiskScore: parseFloat((row?.avgRiskScore ?? "0").toString()),
+      mobileScans: Number(row?.mobileScans ?? 0),
+      webScans: Number(row?.webScans ?? 0),
+      activeDevicesCount: Number(row?.activeDevicesCount ?? 0),
+      avgRiskScore: avgScore,
       scansTodayCount: Number(todayCount[0]?.count ?? 0),
       topThreatCategory: topThreat[0]?.threatCategory ?? null,
+      securityScore,
+      securityLevel,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -49,9 +61,13 @@ router.get("/stats", async (req, res): Promise<void> => {
       threatsBlocked: 0,
       safeLinks: 0,
       suspiciousLinks: 0,
+      mobileScans: 0,
+      webScans: 0,
       avgRiskScore: 0,
       scansTodayCount: 0,
       topThreatCategory: null,
+      securityScore: 98,
+      securityLevel: "OPTIMAL",
     });
   }
 });

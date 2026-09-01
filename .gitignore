@@ -38,3 +38,8 @@ public/previews/
 # OS/editor cruft
 .DS_Store
 *.log
+
+# Local Documents & Generated Reports (Never committed to GitHub)
+*.pdf
+CIPHERSCAN_PAPER.html
+CIPHERSCAN_IEEE_RESEARCH_BASE_PAPER.md

@@ -64,6 +64,7 @@ export function useListScans(params: ListScansParams = {}): UseQueryResult<ListS
         limit: params.limit,
         offset: params.offset,
         verdict: params.verdict,
+        deviceId: params.deviceId,
       }),
   });
 }

@@ -39,6 +39,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
             return
         }
 
+        val lowerUrl = targetUrl.lowercase()
+        val isValidScheme = lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://") || lowerUrl.startsWith("upi://")
+        if (!isValidScheme) {
+            Log.d(TAG, "Ignoring non-web scheme intent: $targetUrl")
+            finish()
+            return
+        }
+
         analyzeAndDisplay(targetUrl)
     }
 
@@ -47,7 +55,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val request = AnalyzeRequest(targetUrl = url, triggerType = "link")
+                val devId = com.cipherscan.android.util.DeviceUtils.getDeviceId(this@LinkInterceptorActivity)
+                val devName = com.cipherscan.android.util.DeviceUtils.getDeviceName()
+                val request = AnalyzeRequest(
+                    targetUrl = url,
+                    triggerType = "link",
+                    deviceId = devId,
+                    deviceName = devName
+                )
                 val response = RetrofitClient.instance.analyzeUrl(request)
 
                 withContext(Dispatchers.Main) {

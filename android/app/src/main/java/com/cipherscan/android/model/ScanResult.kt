@@ -8,7 +8,13 @@ data class AnalyzeRequest(
     val targetUrl: String,
 
     @SerializedName("triggerType")
-    val triggerType: String = "link"
+    val triggerType: String = "link",
+
+    @SerializedName("deviceId")
+    val deviceId: String? = null,
+
+    @SerializedName("deviceName")
+    val deviceName: String? = null
 ) : Serializable
 
 data class ScanResult(
@@ -44,6 +50,12 @@ data class ScanResult(
 
     @SerializedName("triggerType")
     val triggerType: String? = null,
+
+    @SerializedName("deviceId")
+    val deviceId: String? = null,
+
+    @SerializedName("deviceName")
+    val deviceName: String? = null,
 
     @SerializedName("virusTotalScore")
     val virusTotalScore: Any? = null,

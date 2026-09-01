@@ -8,7 +8,20 @@ export interface ThreatReasonsListProps {
 }
 
 export function ThreatReasonsList({ reasons, className }: ThreatReasonsListProps) {
-  if (!reasons || reasons.length === 0) return null;
+  const normalizedReasons: string[] = Array.isArray(reasons)
+    ? reasons
+    : typeof reasons === 'string'
+    ? (() => {
+        try {
+          const parsed = JSON.parse(reasons);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      })()
+    : [];
+
+  if (normalizedReasons.length === 0) return null;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -16,7 +29,7 @@ export function ThreatReasonsList({ reasons, className }: ThreatReasonsListProps
         Detected Threats
       </h4>
       <ul className="space-y-2">
-        {reasons.map((reason, i) => (
+        {normalizedReasons.map((reason, i) => (
           <li key={i} className="flex items-start gap-2 bg-destructive/5 border border-destructive/20 rounded-md p-3">
             <AlertTriangle className="text-destructive shrink-0 mt-0.5" size={16} />
             <span className="text-sm font-medium text-destructive-foreground">{reason}</span>

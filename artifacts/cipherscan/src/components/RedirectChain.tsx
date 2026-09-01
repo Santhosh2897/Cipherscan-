@@ -8,17 +8,30 @@ export interface RedirectChainProps {
 }
 
 export function RedirectChain({ chain, className }: RedirectChainProps) {
-  if (!chain || chain.length === 0) return null;
+  const normalizedChain: string[] = Array.isArray(chain)
+    ? chain
+    : typeof chain === 'string'
+    ? (() => {
+        try {
+          const parsed = JSON.parse(chain);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      })()
+    : [];
+
+  if (normalizedChain.length === 0) return null;
 
   return (
     <div className={cn("space-y-3 font-mono text-sm", className)}>
       <h4 className="text-muted-foreground uppercase text-xs tracking-widest font-semibold mb-4 flex items-center gap-2">
         <Globe size={14} />
-        Redirect Chain ({chain.length} hops)
+        Redirect Chain ({normalizedChain.length} hops)
       </h4>
       <div className="relative border-l-2 border-muted pl-4 ml-2 space-y-6">
-        {chain.map((url, i) => {
-          const isLast = i === chain.length - 1;
+        {normalizedChain.map((url, i) => {
+          const isLast = i === normalizedChain.length - 1;
           const isFirst = i === 0;
           
           let domain = url;

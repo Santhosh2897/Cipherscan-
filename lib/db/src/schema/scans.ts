@@ -14,6 +14,8 @@ export const scansTable = pgTable("scans", {
   reasons: text("reasons").notNull().default("[]"), // JSON string[]
   previewImageUrl: text("preview_image_url"),
   triggerType: text("trigger_type").notNull().default("manual"), // camera | link | manual
+  deviceId: text("device_id"),
+  deviceName: text("device_name"),
   virusTotalScore: integer("virus_total_score"),
   googleSafeBrowsing: boolean("google_safe_browsing").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),

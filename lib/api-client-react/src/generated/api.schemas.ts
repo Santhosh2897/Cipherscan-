@@ -27,6 +27,8 @@ export interface ScanResult {
   reasons: string[];
   previewImageUrl: string | null;
   triggerType: AnalyzeInputTriggerType;
+  deviceId?: string | null;
+  deviceName?: string | null;
   virusTotalScore: number | null;
   googleSafeBrowsing: boolean;
   createdAt: string;
@@ -42,9 +44,14 @@ export interface DashboardStats {
   threatsBlocked: number;
   safeLinks: number;
   suspiciousLinks: number;
+  mobileScans?: number;
+  webScans?: number;
+  activeDevicesCount?: number;
   avgRiskScore: number;
   scansTodayCount: number;
   topThreatCategory: string | null;
+  securityScore?: number;
+  securityLevel?: string;
 }
 
 export interface ThreatBreakdownEntry {
@@ -61,10 +68,13 @@ export interface ScanTimelineEntry {
 export interface AnalyzeUrlInput {
   targetUrl: string;
   triggerType: AnalyzeInputTriggerType;
+  deviceId?: string;
+  deviceName?: string;
 }
 
 export interface ListScansParams {
   limit?: number;
   offset?: number;
   verdict?: ListScansVerdict;
+  deviceId?: string;
 }
