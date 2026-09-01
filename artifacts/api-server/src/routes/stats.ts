@@ -100,22 +100,42 @@ router.get("/stats/timeline", async (req, res): Promise<void> => {
   try {
     const result = await db.execute(sql`
       SELECT
-        DATE(created_at) as date,
+        TO_CHAR(created_at, 'YYYY-MM-DD') as date,
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE verdict != 'safe') as threats
       FROM scans
       WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY DATE(created_at)
+      GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
       ORDER BY date ASC
     `);
+
     const rows = Array.isArray(result) ? result : (result as { rows?: unknown[] }).rows ?? [];
-    res.json(
-      (rows as { date: string; total: string | number; threats: string | number }[]).map((r) => ({
-        date: String(r.date),
-        total: Number(r.total),
-        threats: Number(r.threats),
-      })),
-    );
+    const countsByDate = new Map<string, { total: number; threats: number }>();
+
+    for (const r of rows as any[]) {
+      const dateKey = String(r.date).slice(0, 10);
+      countsByDate.set(dateKey, {
+        total: Number(r.total || 0),
+        threats: Number(r.threats || 0),
+      });
+    }
+
+    // Build complete 7-day series ending today
+    const timeline = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateKey = d.toISOString().slice(0, 10);
+      const existing = countsByDate.get(dateKey) || { total: 0, threats: 0 };
+      timeline.push({
+        date: dateKey,
+        total: existing.total,
+        threats: existing.threats,
+      });
+    }
+
+    res.json(timeline);
   } catch (error: any) {
     res.status(500).json({ error: error.message, items: [] });
   }

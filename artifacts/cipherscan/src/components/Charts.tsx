@@ -51,6 +51,14 @@ export function ScanTimelineChart({ data }: { data: any[] }) {
 }
 
 export function ThreatCategoryChart({ data }: { data: any[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[300px] w-full flex flex-col items-center justify-center text-muted-foreground font-mono text-xs gap-2">
+        <span className="opacity-60">NO THREAT TAXONOMY RECORDED YET</span>
+      </div>
+    );
+  }
+
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
