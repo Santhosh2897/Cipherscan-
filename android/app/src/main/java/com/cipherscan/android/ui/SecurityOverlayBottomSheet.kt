@@ -1,9 +1,8 @@
 package com.cipherscan.android.ui
 
-import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -37,7 +36,12 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        scanResult = arguments?.getSerializable(ARG_SCAN_RESULT) as? ScanResult
+        scanResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getSerializable(ARG_SCAN_RESULT, ScanResult::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            arguments?.getSerializable(ARG_SCAN_RESULT) as? ScanResult
+        }
     }
 
     override fun onCreateView(
@@ -61,7 +65,7 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         val btnBlock = view.findViewById<Button>(R.id.btnCancel)
 
         tvUrl?.text = result.originalUrl ?: result.finalUrl ?: "Unknown URL"
-        tvScore?.text = "Risk Score: ${result.riskScore}/100"
+        tvScore?.text = getString(R.string.risk_score_format, result.riskScore)
 
         val verdictUpper = result.verdict.uppercase()
         tvVerdict?.text = verdictUpper
@@ -92,7 +96,7 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         } else {
             for (reason in reasonsList) {
                 val tvReason = TextView(context).apply {
-                    text = "• $reason"
+                    text = getString(R.string.reason_bullet_format, reason)
                     setTextColor(Color.WHITE)
                     textSize = 13f
                     setPadding(0, 4, 0, 4)
@@ -130,8 +134,8 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
                 ivScreenshot?.load(fullUrl) {
                     crossfade(true)
                     listener(
-                        onError = { _, _ -> ivScreenshot?.visibility = View.GONE },
-                        onSuccess = { _, _ -> ivScreenshot?.visibility = View.VISIBLE }
+                        onError = { _, _ -> ivScreenshot.visibility = View.GONE },
+                        onSuccess = { _, _ -> ivScreenshot.visibility = View.VISIBLE }
                     )
                 }
             }

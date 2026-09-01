@@ -11,4 +11,6 @@
     <string name="redirect_chain_show">Show redirect chain ▼</string>
     <string name="redirect_chain_hide">Hide redirect chain ▲</string>
     <string name="screenshot_preview_desc">Website screenshot preview</string>
+    <string name="risk_score_format">Risk Score: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
 </resources>
