@@ -61,6 +61,14 @@ app.use("/api/analyze", analyzeLimiter);
 // control.
 app.use("/previews", requireApiKey, express.static("public/previews"));
 
+// Ensure API responses are never cached by browsers or proxies so live stats stay current
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+
 // /api/healthz stays public — load balancers and uptime monitors need to
 // reach it without a key. Everything else under /api requires one.
 app.use("/api", healthRouter);

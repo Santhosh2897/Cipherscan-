@@ -16,7 +16,15 @@ if (typeof document !== 'undefined') {
   document.documentElement.classList.add('dark');
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: true,
+      refetchInterval: 5000, // Auto-refresh live stats & scan history every 5 seconds
+      staleTime: 2000,
+    },
+  },
+});
 
 function Router() {
   return (

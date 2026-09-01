@@ -17,7 +17,7 @@ router.get("/stats", async (req, res): Promise<void> => {
           safeLinks: sql<number>`count(*) filter (where verdict = 'safe')`,
           suspiciousLinks: sql<number>`count(*) filter (where verdict = 'suspicious')`,
           mobileScans: sql<number>`count(*) filter (where trigger_type in ('link', 'camera'))`,
-          webScans: sql<number>`count(*) filter (where trigger_type = 'manual')`,
+          webScans: sql<number>`count(*) filter (where trigger_type = 'manual' or trigger_type is null or trigger_type = '')`,
           activeDevicesCount: sql<number>`count(distinct device_id) filter (where device_id is not null)`,
           avgRiskScore: avg(scansTable.riskScore),
         })

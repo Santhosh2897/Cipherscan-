@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { useAnalyzeUrl, AnalyzeInputTriggerType } from '@workspace/api-client-react';
+import React, { useState, useEffect } from 'react';
+import { useAnalyzeUrl, AnalyzeInputTriggerType, ScanResult } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, Loader2, ScanLine, Link as LinkIcon, Smartphone, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScanResultCard } from '@/components/ScanResultCard';
 
 export default function Analyze() {
-  const [url, setUrl] = useState('');
+  const queryClient = useQueryClient();
+  const [url, setUrl] = useState(() => sessionStorage.getItem('cipherscan_last_url') || '');
   const [triggerType, setTriggerType] = useState<AnalyzeInputTriggerType>('manual');
+  const [lastResult, setLastResult] = useState<ScanResult | null>(() => {
+    const cached = sessionStorage.getItem('cipherscan_last_result');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   
   const analyzeMutation = useAnalyzeUrl();
 
@@ -16,13 +28,28 @@ export default function Analyze() {
     e.preventDefault();
     if (!url) return;
     
-    analyzeMutation.mutate({
-      data: {
-        targetUrl: url,
-        triggerType
+    analyzeMutation.mutate(
+      {
+        data: {
+          targetUrl: url,
+          triggerType
+        }
+      },
+      {
+        onSuccess: (data: ScanResult) => {
+          setLastResult(data);
+          try {
+            sessionStorage.setItem('cipherscan_last_result', JSON.stringify(data));
+            sessionStorage.setItem('cipherscan_last_url', data.originalUrl);
+          } catch {}
+          // Invalidate scan history and stats queries to immediately refresh dashboard counts
+          queryClient.invalidateQueries();
+        }
       }
-    });
+    );
   };
+
+  const activeResult = analyzeMutation.data || lastResult;
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8 flex flex-col items-center max-w-5xl mx-auto w-full">
@@ -93,10 +120,10 @@ export default function Analyze() {
         </div>
       )}
 
-      {analyzeMutation.data && !analyzeMutation.isPending && (
+      {activeResult && !analyzeMutation.isPending && (
         <div className="w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-700">
           <h3 className="text-sm font-mono tracking-widest text-muted-foreground uppercase mb-4 border-b border-border/50 pb-2">Analysis Results</h3>
-          <ScanResultCard scan={analyzeMutation.data} isDetailed />
+          <ScanResultCard scan={activeResult} isDetailed />
         </div>
       )}
     </div>
