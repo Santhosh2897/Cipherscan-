@@ -113,4 +113,10 @@ class LinkInterceptorActivity : AppCompatActivity() {
             finish()
         }
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
+    }
 }

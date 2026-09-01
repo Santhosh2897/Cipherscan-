@@ -168,4 +168,14 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
             act?.finish()
         }
     }
+
+    override fun onDismiss(dialog: android.content.DialogInterface) {
+        super.onDismiss(dialog)
+        activity?.finish()
+    }
+
+    override fun onCancel(dialog: android.content.DialogInterface) {
+        super.onCancel(dialog)
+        activity?.finish()
+    }
 }
