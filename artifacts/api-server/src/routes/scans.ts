@@ -101,4 +101,20 @@ router.get("/scans/:id", async (req, res) => {
   }
 });
 
+const clearScansHandler = async (req: any, res: any) => {
+  try {
+    const deleted = await db.delete(scansTable).returning();
+    return res.json({
+      success: true,
+      message: "Telemetry and scan history reset to zero level.",
+      deletedCount: deleted.length,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Failed to delete scan records" });
+  }
+};
+
+router.delete("/scans", clearScansHandler);
+router.post("/scans/clear", clearScansHandler);
+
 export default router;

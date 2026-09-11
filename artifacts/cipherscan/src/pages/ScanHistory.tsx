@@ -1,26 +1,47 @@
 import React, { useState } from 'react';
-import { useListScans } from '@workspace/api-client-react';
-import { Shield, Search, Filter, Loader2, Smartphone, Globe, Camera } from 'lucide-react';
+import { useListScans, useClearScans } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Shield, Search, Filter, Loader2, Smartphone, Globe, Camera, RefreshCw, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { VerdictBadge } from '@/components/VerdictBadge';
 import { Link } from 'wouter';
-import { formatDate } from '@/lib/utils';
+import { formatDate, cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { ListScansVerdict } from '@workspace/api-client-react/src/generated/api.schemas';
 
 export default function ScanHistory() {
+  const queryClient = useQueryClient();
   const [filterVerdict, setFilterVerdict] = useState<ListScansVerdict | ''>('');
   const [filterDeviceId, setFilterDeviceId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const clearScansMutation = useClearScans();
   
   const { data, isLoading } = useListScans({ 
     limit: 100, 
     verdict: filterVerdict ? (filterVerdict as ListScansVerdict) : undefined,
     deviceId: filterDeviceId || undefined,
   });
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm("Are you sure you want to clear all scan history records?")) {
+      clearScansMutation.mutate(undefined, {
+        onSuccess: () => {
+          queryClient.invalidateQueries();
+        }
+      });
+    }
+  };
 
   // Extract unique active devices for dropdown
   const uniqueDevices = React.useMemo(() => {
@@ -73,12 +94,72 @@ export default function ScanHistory() {
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col space-y-4 md:space-y-6 overflow-hidden max-w-7xl mx-auto w-full">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
-          <Shield className="text-primary shrink-0" size={24} />
-          <span>SCAN HISTORY</span>
-        </h1>
-        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">Complete log of all inspected URLs across connected Android devices and Web Dashboard.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
+            <Shield className="text-primary shrink-0" size={24} />
+            <span>SCAN HISTORY</span>
+          </h1>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">Complete log of all inspected URLs across connected Android devices and Web Dashboard.</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="font-mono text-xs gap-1.5 border-border/50 bg-card/50"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : "text-muted-foreground"} />
+            REFRESH
+          </Button>
+
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleClearHistory}
+            disabled={clearScansMutation.isPending}
+            className="font-mono text-xs gap-1.5 bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-900/60"
+          >
+            <Trash2 size={14} />
+            CLEAR ALL
+          </Button>
+        </div>
+      </div>
+
+      {/* Scope Switcher: All Community Scans vs Filtered Devices */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setFilterDeviceId('')}
+          className={cn(
+            "px-3 py-1.5 text-xs font-mono rounded-md border transition-all flex items-center gap-1.5",
+            filterDeviceId === ''
+              ? "bg-primary/20 text-primary border-primary/50 font-bold shadow-sm"
+              : "bg-black/20 text-muted-foreground border-border/40 hover:text-foreground hover:bg-black/40"
+          )}
+        >
+          <Globe size={12} />
+          ALL COMMUNITY SCANS ({data?.items?.length ?? 0})
+        </button>
+
+        {uniqueDevices.map((dev) => (
+          <button
+            key={dev.id}
+            type="button"
+            onClick={() => setFilterDeviceId(dev.id)}
+            className={cn(
+              "px-3 py-1.5 text-xs font-mono rounded-md border transition-all flex items-center gap-1.5",
+              filterDeviceId === dev.id
+                ? "bg-blue-500/20 text-blue-400 border-blue-500/50 font-bold shadow-sm"
+                : "bg-black/20 text-muted-foreground border-border/40 hover:text-foreground hover:bg-black/40"
+            )}
+          >
+            <Smartphone size={12} />
+            {dev.name}
+          </button>
+        ))}
       </div>
 
       <Card className="border-border/50 bg-card/50 backdrop-blur p-3 sm:p-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between shrink-0">
@@ -92,21 +173,6 @@ export default function ScanHistory() {
               className="pl-9 bg-black/20 border-input/50 focus-visible:ring-primary font-mono text-xs sm:text-sm"
             />
           </div>
-
-          {uniqueDevices.length > 0 && (
-            <select
-              value={filterDeviceId}
-              onChange={(e) => setFilterDeviceId(e.target.value)}
-              className="bg-black/40 border border-input/50 rounded-md px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-            >
-              <option value="">ALL DEVICES</option>
-              {uniqueDevices.map((dev) => (
-                <option key={dev.id} value={dev.id}>
-                  {dev.name}
-                </option>
-              ))}
-            </select>
-          )}
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">

@@ -1,6 +1,8 @@
 package com.cipherscan.android.api
 
+import android.content.Context
 import com.cipherscan.android.BuildConfig
+import com.cipherscan.android.util.DeviceUtils
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -19,11 +21,28 @@ object RetrofitClient {
         "https://cipherscan-ecjs.onrender.com/"
     }
 
+    // Lazily-set device ID — call RetrofitClient.init(context) early in the app lifecycle
+    @Volatile
+    private var deviceId: String = ""
+
+    /**
+     * Call once in MainActivity.onCreate (or Application.onCreate) to wire up
+     * the device ID into every outgoing request header.
+     */
+    fun init(context: Context) {
+        deviceId = DeviceUtils.getDeviceId(context)
+    }
+
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
         val builder = original.newBuilder()
         if (BuildConfig.CIPHERSCAN_API_KEY.isNotBlank()) {
             builder.header("x-api-key", BuildConfig.CIPHERSCAN_API_KEY)
+        }
+        // Send device ID on every request so the backend can do per-user isolation
+        // and domain pattern learning without requiring it in the request body.
+        if (deviceId.isNotBlank()) {
+            builder.header("x-device-id", deviceId)
         }
         chain.proceed(builder.build())
     }

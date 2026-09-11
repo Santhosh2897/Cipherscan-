@@ -201,6 +201,15 @@
                     android:backgroundTint="#2563EB"
                     android:text="Inspect &amp; Analyze Threat"
                     android:textColor="#FFFFFF" />
+
+                <Button
+                    android:id="@+id/btnScanQr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="#7C3AED"
+                    android:text="📷 Scan QR Code with Camera"
+                    android:textColor="#FFFFFF" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

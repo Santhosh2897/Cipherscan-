@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { Shield, LayoutDashboard, Search, History, Activity, X } from 'lucide-react';
+import { Shield, LayoutDashboard, Search, History, Activity, X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/analyze', label: 'URL Analyzer', icon: Search },
     { href: '/scans', label: 'Scan History', icon: History },
+    { href: '/threat-intel', label: 'Threat Intel Feed', icon: Zap, badge: 'LIVE' },
   ];
 
   return (
@@ -72,7 +73,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 )}
               >
                 <item.icon size={18} className={cn("transition-colors", isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground")} />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {'badge' in item && item.badge && (
+                  <span className="text-[8px] font-mono font-bold px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 animate-pulse">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAnalyzeUrl, AnalyzeInputTriggerType, ScanResult } from '@workspace/api-client-react';
+import { useAnalyzeUrl, ScanResult } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Search, Loader2, ScanLine, Link as LinkIcon, Smartphone, ShieldCheck } from 'lucide-react';
+import { Search, Loader2, ScanLine, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScanResultCard } from '@/components/ScanResultCard';
@@ -9,7 +9,6 @@ import { ScanResultCard } from '@/components/ScanResultCard';
 export default function Analyze() {
   const queryClient = useQueryClient();
   const [url, setUrl] = useState(() => sessionStorage.getItem('cipherscan_last_url') || '');
-  const [triggerType, setTriggerType] = useState<AnalyzeInputTriggerType>('manual');
   const [lastResult, setLastResult] = useState<ScanResult | null>(() => {
     const cached = sessionStorage.getItem('cipherscan_last_result');
     if (cached) {
@@ -32,7 +31,7 @@ export default function Analyze() {
       {
         data: {
           targetUrl: url,
-          triggerType
+          triggerType: 'manual'
         }
       },
       {
@@ -43,7 +42,8 @@ export default function Analyze() {
             sessionStorage.setItem('cipherscan_last_url', data.originalUrl);
           } catch {}
           // Invalidate scan history and stats queries to immediately refresh dashboard counts
-          queryClient.invalidateQueries();
+          queryClient.invalidateQueries({ queryKey: ['scans'] });
+          queryClient.invalidateQueries({ queryKey: ['stats'] });
         }
       }
     );
@@ -68,17 +68,9 @@ export default function Analyze() {
       <Card className="w-full border-primary/20 bg-card/50 backdrop-blur shadow-2xl shadow-primary/5">
         <CardContent className="p-2 sm:p-3">
           <form onSubmit={handleAnalyze} className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-1 relative flex flex-col sm:flex-row items-stretch sm:items-center bg-black/20 rounded-md overflow-hidden border border-input focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
-              <div className="px-3 py-2 sm:py-0 flex items-center gap-2 border-b sm:border-b-0 sm:border-r border-border/50 text-muted-foreground bg-black/40 sm:bg-transparent">
-                <select 
-                  className="bg-transparent border-none text-xs font-mono uppercase tracking-widest focus:ring-0 cursor-pointer outline-none w-full"
-                  value={triggerType}
-                  onChange={(e) => setTriggerType(e.target.value as AnalyzeInputTriggerType)}
-                >
-                  <option value="manual">MANUAL</option>
-                  <option value="link">SMS/LINK</option>
-                  <option value="camera">QR/CAMERA</option>
-                </select>
+            <div className="flex-1 relative flex items-center bg-black/20 rounded-md overflow-hidden border border-input focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+              <div className="pl-3.5 sm:pl-4 text-muted-foreground flex items-center justify-center">
+                <Search size={18} className="text-muted-foreground/70" />
               </div>
               <input 
                 type="text" 

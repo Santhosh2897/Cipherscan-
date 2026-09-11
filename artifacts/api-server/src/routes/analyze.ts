@@ -1,11 +1,20 @@
 import { Router } from "express";
 import { db, scansTable } from "@workspace/db";
-import { and, eq, gte, desc } from "drizzle-orm";
 import { AnalyzeUrlBody } from "@workspace/api-zod";
-import { analyzeSandbox } from "../lib/sandboxService";
-import { analyzeReputation } from "../lib/reputationService";
-import { assertUrlIsSafe, UnsafeUrlError } from "../lib/urlSafety";
-import { logger } from "../lib/logger";
+import { analyzeSandbox, createFallbackPreviewDataUri, fetchCloudScreenshot } from "../lib/sandboxService.js";
+import { analyzeReputation } from "../lib/reputationService.js";
+import { assertUrlIsSafe, UnsafeUrlError } from "../lib/urlSafety.js";
+import { logger } from "../lib/logger.js";
+import {
+  getCachedScan,
+  upsertUrlCache,
+  updateCachePreviewImage,
+  incrementCacheScanCount,
+  upsertDomainPattern,
+  getDomainPatternForDevice,
+  isTrustedDomainForDevice,
+  isUpiUrl,
+} from "../lib/urlIntelligence.js";
 
 const router = Router();
 
@@ -19,6 +28,15 @@ function safeParseJsonArray(input: string | null | undefined): string[] {
   }
 }
 
+function normalizeUrlInput(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 router.post("/analyze", async (req, res): Promise<void> => {
   try {
     const parsed = AnalyzeUrlBody.safeParse(req.body);
@@ -27,74 +45,191 @@ router.post("/analyze", async (req, res): Promise<void> => {
       return;
     }
 
-    const { targetUrl, triggerType } = parsed.data;
-    const rawBody = req.body as { deviceId?: string; deviceName?: string };
-    const deviceId = typeof rawBody?.deviceId === 'string' && rawBody.deviceId.trim() !== '' ? rawBody.deviceId.trim() : null;
-    const deviceName = typeof rawBody?.deviceName === 'string' && rawBody.deviceName.trim() !== '' ? rawBody.deviceName.trim() : null;
+    const { targetUrl: rawTargetUrl, triggerType: rawTrigger, deviceId: rawDevId, deviceName: rawDevName } = parsed.data;
+    const targetUrl = normalizeUrlInput(rawTargetUrl);
+    const triggerType = rawTrigger || "manual";
+    const deviceId = rawDevId && rawDevId.trim() !== "" ? rawDevId.trim() : null;
+    const deviceName = rawDevName && rawDevName.trim() !== "" ? rawDevName.trim() : null;
+
+    // Bypass cache flag: ?fresh=true or X-Force-Fresh: true header
+    const forceFresh =
+      req.query["fresh"] === "true" ||
+      req.headers["x-force-fresh"] === "true";
 
     // SSRF guard: reject URLs pointing at localhost, private IP ranges, or cloud metadata
     try {
       await assertUrlIsSafe(targetUrl);
     } catch (err) {
       if (err instanceof UnsafeUrlError) {
-        res.status(400).json({ error: "URL not allowed" });
+        res.status(400).json({ error: err.message || "URL not allowed" });
         return;
       }
       res.status(400).json({ error: "Invalid or malformed target URL" });
       return;
     }
 
-    // Check if link was recently scanned (cached within 24 hours) with DB error safety
-    try {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const existingScans = await db
-        .select()
-        .from(scansTable)
-        .where(and(eq(scansTable.originalUrl, targetUrl), gte(scansTable.createdAt, twentyFourHoursAgo)))
-        .orderBy(desc(scansTable.createdAt))
-        .limit(1);
+    // ── STEP 1: Check per-device trusted domain (instant whitelist) ──────────
+    const domainTrusted = !forceFresh && await isTrustedDomainForDevice(targetUrl, deviceId);
+    if (domainTrusted) {
+      logger.info({ targetUrl, deviceId }, "Trusted domain whitelist HIT — instant SAFE");
+      const domainPattern = await getDomainPatternForDevice(targetUrl, deviceId);
 
-      if (existingScans.length > 0) {
-        const cached = existingScans[0];
-        res.json({
-          id: cached.id,
+      const cached = await getCachedScan(targetUrl).catch(() => null);
+      let previewImageUrl = cached?.previewImageUrl;
+      if (!previewImageUrl || previewImageUrl.includes("data:image/svg+xml")) {
+        previewImageUrl = isUpiUrl(targetUrl)
+          ? createFallbackPreviewDataUri(targetUrl)
+          : await fetchCloudScreenshot(targetUrl).catch(() => null);
+      }
+
+      // Still record the personal scan in the scans table
+      const insertedRows = await db
+        .insert(scansTable)
+        .values({
+          originalUrl: targetUrl,
+          finalUrl: targetUrl,
+          isSafe: true,
+          riskScore: 0,
+          verdict: "safe",
+          threatCategory: null,
+          redirectChain: JSON.stringify([targetUrl]),
+          reasons: JSON.stringify(["Trusted domain — you have visited this site safely many times"]),
+          previewImageUrl,
+          triggerType,
+          deviceId,
+          deviceName,
+          virusTotalScore: null,
+          googleSafeBrowsing: false,
+        })
+        .returning()
+        .catch(() => []);
+
+      const scanId = insertedRows[0]?.id ?? Date.now();
+      const createdAt = insertedRows[0]?.createdAt?.toISOString() ?? new Date().toISOString();
+      await upsertDomainPattern(targetUrl, deviceId, "safe");
+
+      res.json({
+        id: scanId,
+        originalUrl: targetUrl,
+        finalUrl: targetUrl,
+        isSafe: true,
+        riskScore: 0,
+        verdict: "safe",
+        threatCategory: null,
+        redirectChain: [targetUrl],
+        reasons: ["Trusted domain — you have visited this site safely many times"],
+        previewImageUrl,
+        triggerType,
+        deviceId,
+        deviceName,
+        virusTotalScore: null,
+        googleSafeBrowsing: false,
+        createdAt,
+        fromCache: false,
+        fromTrustedDomain: true,
+        domainScanCount: domainPattern?.scanCount ?? 1,
+        communityTrustScore: null,
+      });
+      return;
+    }
+
+    // ── STEP 2: Check cross-user URL cache ────────────────────────────────────
+    const cached = !forceFresh && !isUpiUrl(targetUrl)
+      ? await getCachedScan(targetUrl)
+      : null;
+
+    if (cached) {
+      logger.info({ targetUrl }, "url_cache HIT — returning fast result");
+      incrementCacheScanCount(targetUrl).catch(() => {});
+
+      // If cached image is missing or is an old dummy SVG placeholder, upgrade to live cloud screenshot
+      if (!isUpiUrl(targetUrl) && (!cached.previewImageUrl || cached.previewImageUrl.includes("data:image/svg+xml"))) {
+        const freshImage = await fetchCloudScreenshot(targetUrl).catch(() => null);
+        if (freshImage) {
+          cached.previewImageUrl = freshImage;
+          updateCachePreviewImage(targetUrl, freshImage).catch(() => {});
+        }
+      }
+
+      const domainPattern = await getDomainPatternForDevice(targetUrl, deviceId);
+      upsertDomainPattern(targetUrl, deviceId, cached.verdict).catch(() => {});
+
+      // Create personal scan record
+      const insertedRows = await db
+        .insert(scansTable)
+        .values({
           originalUrl: cached.originalUrl,
           finalUrl: cached.finalUrl,
-          isSafe: cached.isSafe,
+          isSafe: cached.verdict === "safe",
           riskScore: cached.riskScore,
           verdict: cached.verdict,
           threatCategory: cached.threatCategory,
-          redirectChain: safeParseJsonArray(cached.redirectChain),
-          reasons: safeParseJsonArray(cached.reasons),
+          redirectChain: cached.redirectChain,
+          reasons: cached.reasons,
           previewImageUrl: cached.previewImageUrl,
-          triggerType: cached.triggerType,
-          deviceId: cached.deviceId,
-          deviceName: cached.deviceName,
+          triggerType,
+          deviceId,
+          deviceName,
           virusTotalScore: cached.virusTotalScore,
-          googleSafeBrowsing: cached.googleSafeBrowsing,
-          createdAt: cached.createdAt ? cached.createdAt.toISOString() : new Date().toISOString(),
-        });
-        return;
-      }
-    } catch (cacheErr: any) {
-      logger.warn({ error: cacheErr.message }, "Database scan cache lookup failed, continuing with fresh scan");
+          googleSafeBrowsing: false,
+        })
+        .returning()
+        .catch(() => []);
+
+      const scanId = insertedRows[0]?.id ?? Date.now();
+      const createdAt = insertedRows[0]?.createdAt?.toISOString() ?? new Date().toISOString();
+
+      res.json({
+        id: scanId,
+        originalUrl: cached.originalUrl,
+        finalUrl: cached.finalUrl,
+        isSafe: cached.verdict === "safe",
+        riskScore: cached.riskScore,
+        verdict: cached.verdict,
+        threatCategory: cached.threatCategory,
+        redirectChain: safeParseJsonArray(cached.redirectChain),
+        reasons: safeParseJsonArray(cached.reasons),
+        previewImageUrl: cached.previewImageUrl,
+        triggerType,
+        deviceId,
+        deviceName,
+        virusTotalScore: cached.virusTotalScore,
+        googleSafeBrowsing: false,
+        createdAt,
+        fromCache: true,
+        fromTrustedDomain: false,
+        domainScanCount: domainPattern?.scanCount ?? null,
+        communityTrustScore: null,
+        cacheHitCount: cached.scanCount,
+      });
+      return;
     }
 
-    // Determine server base URL for preview image URLs
-    const serverBaseUrl = process.env["SERVER_BASE_URL"] ??
-      `${req.protocol}://${req.get("host")}`;
+    // ── STEP 3: Full scan (cache miss) ────────────────────────────────────────
+    logger.info({ targetUrl }, "url_cache MISS — running full scan");
 
-    // Run sandbox analysis and reputation checks concurrently
+    const serverBaseUrl =
+      process.env["SERVER_BASE_URL"] ?? `${req.protocol}://${req.get("host")}`;
+
     const [sandboxSettled] = await Promise.allSettled([
       analyzeSandbox(targetUrl, serverBaseUrl),
     ]);
 
-    const sandbox = sandboxSettled.status === "fulfilled"
-      ? sandboxSettled.value
-      : { finalUrl: targetUrl, redirectChain: [targetUrl], previewImageUrl: null };
+    const sandbox =
+      sandboxSettled.status === "fulfilled"
+        ? sandboxSettled.value
+        : { finalUrl: targetUrl, redirectChain: [targetUrl], previewImageUrl: null };
 
-    // Now run reputation with resolved finalUrl
-    const reputation = await analyzeReputation(targetUrl, sandbox.finalUrl, sandbox.redirectChain).catch(() => ({
+    let previewImageUrl = sandbox.previewImageUrl;
+    if ((!previewImageUrl || previewImageUrl.includes("data:image/svg+xml")) && !isUpiUrl(targetUrl)) {
+      previewImageUrl = await fetchCloudScreenshot(targetUrl).catch(() => null);
+    }
+
+    const reputation = await analyzeReputation(
+      targetUrl,
+      sandbox.finalUrl,
+      sandbox.redirectChain,
+    ).catch(() => ({
       riskScore: 0,
       verdict: "safe" as const,
       threatCategory: null,
@@ -103,8 +238,23 @@ router.post("/analyze", async (req, res): Promise<void> => {
       googleSafeBrowsing: false,
     }));
 
-    // Try to persist scan to DB with graceful fallback if DB fails
-    let scanId = Date.now();
+    // Write to url_cache and domain patterns (non-blocking, background)
+    upsertUrlCache({
+      originalUrl: targetUrl,
+      finalUrl: sandbox.finalUrl,
+      verdict: reputation.verdict,
+      riskScore: reputation.riskScore,
+      threatCategory: reputation.threatCategory,
+      redirectChain: JSON.stringify(sandbox.redirectChain),
+      reasons: JSON.stringify(reputation.reasons),
+      previewImageUrl,
+      virusTotalScore: reputation.virusTotalScore,
+    }).catch(() => {});
+
+    upsertDomainPattern(targetUrl, deviceId, reputation.verdict).catch(() => {});
+
+    // Persist personal scan record
+    let scanId: number = Date.now();
     let createdAtIso = new Date().toISOString();
 
     try {
@@ -119,10 +269,10 @@ router.post("/analyze", async (req, res): Promise<void> => {
           threatCategory: reputation.threatCategory,
           redirectChain: JSON.stringify(sandbox.redirectChain),
           reasons: JSON.stringify(reputation.reasons),
-          previewImageUrl: sandbox.previewImageUrl,
-          triggerType: triggerType,
-          deviceId: deviceId,
-          deviceName: deviceName,
+          previewImageUrl,
+          triggerType,
+          deviceId,
+          deviceName,
           virusTotalScore: reputation.virusTotalScore,
           googleSafeBrowsing: reputation.googleSafeBrowsing,
         })
@@ -130,11 +280,15 @@ router.post("/analyze", async (req, res): Promise<void> => {
 
       if (insertedRows.length > 0) {
         scanId = insertedRows[0].id;
-        createdAtIso = insertedRows[0].createdAt ? insertedRows[0].createdAt.toISOString() : createdAtIso;
+        createdAtIso = insertedRows[0].createdAt
+          ? insertedRows[0].createdAt.toISOString()
+          : createdAtIso;
       }
     } catch (dbInsertErr: any) {
       logger.error({ error: dbInsertErr.message }, "Failed to persist scan record to database");
     }
+
+    const domainPattern = await getDomainPatternForDevice(targetUrl, deviceId);
 
     res.json({
       id: scanId,
@@ -146,13 +300,17 @@ router.post("/analyze", async (req, res): Promise<void> => {
       threatCategory: reputation.threatCategory,
       redirectChain: sandbox.redirectChain,
       reasons: reputation.reasons,
-      previewImageUrl: sandbox.previewImageUrl,
-      triggerType: triggerType,
-      deviceId: deviceId,
-      deviceName: deviceName,
+      previewImageUrl,
+      triggerType,
+      deviceId,
+      deviceName,
       virusTotalScore: reputation.virusTotalScore,
       googleSafeBrowsing: reputation.googleSafeBrowsing,
       createdAt: createdAtIso,
+      fromCache: false,
+      fromTrustedDomain: false,
+      domainScanCount: domainPattern?.scanCount ?? null,
+      communityTrustScore: null,
     });
   } catch (globalErr: any) {
     logger.error({ error: globalErr.message }, "Unexpected error in POST /api/analyze");

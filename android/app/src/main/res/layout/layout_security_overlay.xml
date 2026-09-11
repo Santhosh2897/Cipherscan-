@@ -2,7 +2,7 @@
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#1E1E2E"
+    android:background="#131B2E"
     android:padding="20dp">
 
     <LinearLayout
@@ -44,17 +44,104 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- Intelligence Badges: Cached / Trusted Domain / Community Trust -->
+        <LinearLayout
+            android:id="@+id/containerIntelBadges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvCacheBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:background="#2206B6D4"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="⚡ Instant Cache"
+                android:textColor="#22D3EE"
+                android:textSize="11sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvTrustedDomainBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:background="#2210B981"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="⭐ Trusted Domain"
+                android:textColor="#34D399"
+                android:textSize="11sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvCommunityTrustBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#228B5CF6"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="👥 Community Trust"
+                android:textColor="#A78BFA"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
         <!-- Target URL -->
         <TextView
             android:id="@+id/tvTargetUrl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:ellipsize="middle"
             android:singleLine="true"
             android:text="https://example.com"
             android:textColor="#9CA3AF"
             android:textSize="13sp" />
+
+        <!-- UPI Payment Analysis Card -->
+        <LinearLayout
+            android:id="@+id/containerUpiAlert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#1E1B4B"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvUpiTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💳 UPI Payment Verification"
+                android:textColor="#C084FC"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvUpiDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#E2E8F0"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvUpiWarning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="#33EF4444"
+                android:padding="8dp"
+                android:textColor="#FCA5A5"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <View
             android:layout_width="match_parent"
@@ -117,13 +204,24 @@
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 
+        <!-- Report Threat Button -->
+        <Button
+            android:id="@+id/btnReportThreat"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="🚩 Report as Suspicious Threat"
+            android:textColor="#F87171"
+            android:textSize="12sp" />
+
         <!-- Direct Web Dashboard Link -->
         <Button
             android:id="@+id/btnViewOnWebDashboard"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="4dp"
             android:text="Open in Web Dashboard ↗"
             android:textColor="#38BDF8"
             android:textSize="13sp" />

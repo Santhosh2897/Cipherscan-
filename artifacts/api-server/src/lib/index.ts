@@ -25,8 +25,9 @@
  *                          Gracefully degrades if playwright is not installed.
  */
 
-export { logger } from "./logger";
-export { analyzeSandbox } from "./sandboxService";
-export type { SandboxResult } from "./sandboxService";
-export { analyzeReputation } from "./reputationService";
-export type { ReputationResult } from "./reputationService";
+export { logger } from "./logger.js";
+export { analyzeSandbox } from "./sandboxService.js";
+export type { SandboxResult } from "./sandboxService.js";
+export { analyzeReputation } from "./reputationService.js";
+export type { ReputationResult } from "./reputationService.js";
+export * from "./urlIntelligence.js";

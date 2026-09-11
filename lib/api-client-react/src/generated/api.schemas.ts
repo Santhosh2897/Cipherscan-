@@ -78,3 +78,9 @@ export interface ListScansParams {
   verdict?: ListScansVerdict;
   deviceId?: string;
 }
+
+export interface ClearScansResponse {
+  success: boolean;
+  message: string;
+  deletedCount: number;
+}

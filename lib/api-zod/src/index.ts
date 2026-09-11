@@ -20,13 +20,24 @@ export type HealthCheckResponse = z.infer<typeof HealthCheckResponse>;
 
 /**
  * POST /api/analyze — request body
- * (routes/analyze.ts destructures { targetUrl, triggerType } from this)
  */
 export const AnalyzeUrlBody = z.object({
   targetUrl: z.string().min(1, "targetUrl is required"),
-  triggerType: TriggerType,
+  triggerType: z.string().optional().default("manual"),
+  deviceId: z.string().optional().nullable(),
+  deviceName: z.string().optional().nullable(),
 });
 export type AnalyzeUrlBody = z.infer<typeof AnalyzeUrlBody>;
+
+/**
+ * DELETE /api/scans — response body
+ */
+export const ClearScansResponse = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  deletedCount: z.number(),
+});
+export type ClearScansResponse = z.infer<typeof ClearScansResponse>;
 
 /**
  * GET /api/scans/:id — route params
@@ -46,6 +57,7 @@ export const ListScansQueryParams = z.object({
   limit: z.coerce.number().int().positive().max(200).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
   verdict: Verdict.optional(),
+  deviceId: z.string().optional(),
 });
 export type ListScansQueryParams = z.infer<typeof ListScansQueryParams>;
 
@@ -65,7 +77,9 @@ export const ScanResult = z.object({
   redirectChain: z.array(z.string()),
   reasons: z.array(z.string()),
   previewImageUrl: z.string().nullable(),
-  triggerType: TriggerType,
+  triggerType: z.string(),
+  deviceId: z.string().optional().nullable(),
+  deviceName: z.string().optional().nullable(),
   virusTotalScore: z.number().nullable(),
   googleSafeBrowsing: z.boolean(),
   createdAt: z.string(),

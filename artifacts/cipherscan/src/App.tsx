@@ -10,6 +10,8 @@ import Dashboard from '@/pages/Dashboard';
 import Analyze from '@/pages/Analyze';
 import ScanHistory from '@/pages/ScanHistory';
 import ScanDetail from '@/pages/ScanDetail';
+import ThreatIntel from '@/pages/ThreatIntel';
+
 
 // Force dark mode
 if (typeof document !== 'undefined') {
@@ -19,9 +21,9 @@ if (typeof document !== 'undefined') {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: true,
-      refetchInterval: 5000, // Auto-refresh live stats & scan history every 5 seconds
-      staleTime: 2000,
+      refetchOnWindowFocus: false,
+      refetchInterval: false, // Auto-refresh removed; user triggers manual refresh on demand
+      staleTime: 0, // Always refetch when invalidated (e.g. after a new scan is submitted)
     },
   },
 });
@@ -34,6 +36,7 @@ function Router() {
         <Route path="/analyze" component={Analyze} />
         <Route path="/scans" component={ScanHistory} />
         <Route path="/scans/:id" component={ScanDetail} />
+        <Route path="/threat-intel" component={ThreatIntel} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

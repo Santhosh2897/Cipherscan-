@@ -37,31 +37,126 @@ export interface SandboxResult {
   error?: string;
 }
 
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
 /**
- * Analyzes the target URL in a Playwright sandbox.
- *
- * @param targetUrl    - The URL to navigate to.
- * @param serverBaseUrl - Base URL used to build the previewImageUrl
- *                        (e.g. "https://cipherscan-api.onrender.com").
- *                        If empty, falls back to "" (relative path, mainly for local dev).
+ * Creates a rich visual card for UPI payment requests.
  */
-function createFallbackPreviewDataUri(url: string): string {
-  let hostname = url;
+export function createUpiPreviewDataUri(url: string): string {
+  let payee = "Merchant / Payee";
+  let pa = "";
+  let am = "";
   try {
-    hostname = new URL(url).hostname;
+    const parsed = new URL(url.replace("upi://", "http://fake-upi/"));
+    pa = parsed.searchParams.get("pa") || "";
+    const pn = parsed.searchParams.get("pn") || "";
+    am = parsed.searchParams.get("am") || "";
+    if (pn) payee = pn;
+    else if (pa) payee = pa;
   } catch {}
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="350" viewBox="0 0 600 350">
-    <rect width="600" height="350" fill="#0c101d"/>
-    <rect x="20" y="20" width="560" height="310" rx="8" fill="#141a29" stroke="#1f293d" stroke-width="2"/>
-    <circle cx="50" cy="45" r="6" fill="#ef4444"/>
-    <circle cx="70" cy="45" r="6" fill="#f59e0b"/>
-    <circle cx="90" cy="45" r="6" fill="#10b981"/>
-    <rect x="110" y="35" width="450" height="20" rx="4" fill="#1a2336"/>
-    <text x="120" y="49" fill="#9ca3af" font-family="monospace" font-size="11">${hostname}</text>
-    <text x="300" y="170" fill="#00d4ff" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">CipherScan Security Sandbox</text>
-    <text x="300" y="200" fill="#9ca3af" font-family="monospace" font-size="12" text-anchor="middle">Target Preview Captured</text>
+    <defs>
+      <linearGradient id="upiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a"/>
+        <stop offset="100%" stop-color="#1e293b"/>
+      </linearGradient>
+      <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00d4ff"/>
+        <stop offset="100%" stop-color="#0284c7"/>
+      </linearGradient>
+    </defs>
+    <rect width="600" height="350" fill="#090d16"/>
+    <rect x="24" y="24" width="552" height="302" rx="12" fill="url(#upiGrad)" stroke="#334155" stroke-width="2"/>
+    <rect x="44" y="44" width="100" height="28" rx="6" fill="url(#badgeGrad)"/>
+    <text x="94" y="63" fill="#ffffff" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">UPI PAYMENT</text>
+    <circle cx="530" cy="58" r="8" fill="#10b981"/>
+    <text x="512" y="62" fill="#94a3b8" font-family="sans-serif" font-size="11" text-anchor="end">Secure Gateway</text>
+    <text x="44" y="130" fill="#94a3b8" font-family="sans-serif" font-size="13">Payee / Merchant:</text>
+    <text x="44" y="165" fill="#f8fafc" font-family="sans-serif" font-size="22" font-weight="bold">${escapeXml(payee)}</text>
+    ${pa ? `<text x="44" y="195" fill="#38bdf8" font-family="monospace" font-size="13">VPA: ${escapeXml(pa)}</text>` : ''}
+    ${am ? `<text x="44" y="240" fill="#34d399" font-family="sans-serif" font-size="20" font-weight="bold">Amount: ₹${escapeXml(am)}</text>` : ''}
+    <line x1="44" y1="265" x2="556" y2="265" stroke="#334155" stroke-width="1"/>
+    <text x="300" y="295" fill="#64748b" font-family="sans-serif" font-size="12" text-anchor="middle">CipherScan Deep Payment Inspector</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Backwards compatibility fallback generator.
+ */
+export function createFallbackPreviewDataUri(url: string): string {
+  if (url.startsWith("upi://")) {
+    return createUpiPreviewDataUri(url);
+  }
+  return "";
+}
+
+/**
+ * Fetches a genuine screenshot of a website using cloud rendering CDN services
+ * (WordPress mShots and Thum.io CDN).
+ * Returns a data:image/jpeg;base64,... string, or null on failure.
+ */
+export async function fetchCloudScreenshot(targetUrl: string): Promise<string | null> {
+  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+    return null;
+  }
+
+  const endpoints = [
+    `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`,
+    `https://image.thum.io/get/width/1280/crop/720/${targetUrl}`
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+      const response = await fetch(endpoint, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Accept": "image/jpeg,image/png,image/*"
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        if (buffer.byteLength > 1000) {
+          const contentType = response.headers.get("content-type") || "image/jpeg";
+          const mime = contentType.includes("png") ? "image/png" : "image/jpeg";
+          const base64DataUri = `data:${mime};base64,${Buffer.from(buffer).toString("base64")}`;
+
+          try {
+            const hash = createHash("md5").update(targetUrl + Date.now()).digest("hex");
+            await mkdir(PREVIEWS_DIR, { recursive: true });
+            await writeFile(path.join(PREVIEWS_DIR, `${hash}.jpg`), Buffer.from(buffer));
+          } catch {
+            // Ignore disk write errors
+          }
+
+          return base64DataUri;
+        }
+      }
+    } catch (err: any) {
+      logger.debug({ endpoint, error: err.message }, "Cloud screenshot attempt failed, trying next");
+    }
+  }
+
+  return null;
 }
 
 export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Promise<SandboxResult> {
@@ -69,7 +164,7 @@ export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Pro
 
   if (targetUrl.startsWith("upi://")) {
     return {
-      previewImageUrl: createFallbackPreviewDataUri(targetUrl),
+      previewImageUrl: createUpiPreviewDataUri(targetUrl),
       finalUrl: targetUrl,
       redirectChain,
       pageTitle: "UPI Payment URI",
@@ -134,7 +229,6 @@ export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Pro
     // Return Data URI screenshot directly so it displays everywhere (Android, Web, Serverless)
     const base64DataUri = `data:image/jpeg;base64,${screenshotBuffer.toString("base64")}`;
 
-    // Optionally also save file to disk if PREVIEWS_DIR is writable
     try {
       const hash = createHash("md5").update(targetUrl + Date.now()).digest("hex");
       await mkdir(PREVIEWS_DIR, { recursive: true });
@@ -151,9 +245,13 @@ export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Pro
     };
   } catch (error: any) {
     if (context) await context.close().catch(() => {});
-    logger.warn({ error: error.message, targetUrl }, "Sandbox execution fallback triggered");
+    logger.warn({ error: error.message, targetUrl }, "Playwright local sandbox failed, fetching cloud screenshot");
+
+    // Seamlessly capture real visual screenshot using Cloud Screenshot CDN
+    const cloudScreenshot = await fetchCloudScreenshot(targetUrl);
+
     return {
-      previewImageUrl: createFallbackPreviewDataUri(targetUrl),
+      previewImageUrl: cloudScreenshot,
       finalUrl: targetUrl,
       redirectChain,
       pageTitle: null,

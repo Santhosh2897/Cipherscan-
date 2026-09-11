@@ -32,13 +32,27 @@ app.use(
     },
   }),
 );
-// Restrict cross-origin requests to the configured web dashboard origin.
-// Previously this was open cors(), allowing any website to call the API
-// from a visitor's browser. Mobile clients (Android) aren't subject to
-// CORS at all, so this only ever needed to cover the web dashboard.
+const allowedOrigin = process.env["ALLOWED_ORIGIN"];
 app.use(
   cors({
-    origin: process.env["ALLOWED_ORIGIN"] ?? false,
+    origin: (origin, callback) => {
+      // Mobile clients, curl, server-to-server have no origin header
+      if (!origin) return callback(null, true);
+      // Explicit allowed origin
+      if (allowedOrigin && (allowedOrigin === "*" || allowedOrigin === origin)) {
+        return callback(null, true);
+      }
+      // Allow any localhost / 127.0.0.1 port in dev
+      if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+        return callback(null, true);
+      }
+      // Default to allowed in dev if not production
+      if (process.env.NODE_ENV !== "production") {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+    credentials: true,
   }),
 );
 app.use(express.json());

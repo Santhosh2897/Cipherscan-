@@ -1,8 +1,9 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryOptions, type UseQueryResult } from "@tanstack/react-query";
-import { apiGet, apiPost } from "./generated/api.client";
+import { apiDelete, apiGet, apiPost } from "./generated/api.client";
 import type {
   AnalyzeInputTriggerType,
   AnalyzeUrlInput,
+  ClearScansResponse,
   DashboardStats,
   ListScansParams,
   ListScansResponse,
@@ -14,6 +15,7 @@ import type {
 export type {
   AnalyzeInputTriggerType,
   AnalyzeUrlInput,
+  ClearScansResponse,
   DashboardStats,
   ListScansParams,
   ListScansResponse,
@@ -99,5 +101,122 @@ export function useGetScan(
 export function useAnalyzeUrl(): UseMutationResult<ScanResult, Error, { data: AnalyzeUrlInput }> {
   return useMutation({
     mutationFn: ({ data }) => apiPost<ScanResult>("/api/analyze", data),
+  });
+}
+
+/**
+ * DELETE /api/scans — Wipes all scan history records from DB
+ */
+export function useClearScans(): UseMutationResult<ClearScansResponse, Error, void> {
+  return useMutation({
+    mutationFn: () => apiDelete<ClearScansResponse>("/api/scans"),
+  });
+}
+
+// ─── Intelligence Hooks ──────────────────────────────────────────────────────
+
+export interface CommunityStats {
+  totalCachedUrls: number;
+  totalCommunityFlags: number;
+  totalReports: number;
+  totalScanHits: number;
+  avgUrlScanCount: string;
+  verdictBreakdown: { safe: number; suspicious: number; malicious: number };
+}
+
+export interface CommunityTrust {
+  urlHash: string;
+  trustScore: number;
+  scanCount: number;
+  communityFlags: number;
+  verdict: string | null;
+  isKnown: boolean;
+}
+
+export interface TrendingThreats {
+  period: string;
+  trendingCategories: Array<{ category: string; count: number; avgRiskScore: number }>;
+  topFlaggedUrls: Array<{ urlHash: string; flagCount: number }>;
+}
+
+export interface UserPatterns {
+  deviceId: string;
+  trustedDomains: string[];
+  blockedDomains: string[];
+  totalDomainsTracked: number;
+  totalScansTracked: number;
+  topDomains: Array<{ domain: string; scanCount: number; isTrusted: boolean; lastSeen: string }>;
+}
+
+/**
+ * GET /api/community/stats
+ */
+export function useGetCommunityStats(): UseQueryResult<CommunityStats> {
+  return useQuery({
+    queryKey: ["community", "stats"],
+    queryFn: () => apiGet<CommunityStats>("/api/community/stats"),
+    staleTime: 30_000, // refresh every 30s
+  });
+}
+
+/**
+ * GET /api/community/trust?url=
+ */
+export function useGetCommunityTrust(
+  url: string | null,
+  options?: { enabled?: boolean },
+): UseQueryResult<CommunityTrust> {
+  return useQuery({
+    queryKey: ["community", "trust", url],
+    queryFn: () => apiGet<CommunityTrust>("/api/community/trust", { url: url ?? undefined }),
+    enabled: !!url && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * GET /api/community/trending-threats
+ */
+export function useGetTrendingThreats(): UseQueryResult<TrendingThreats> {
+  return useQuery({
+    queryKey: ["community", "trending"],
+    queryFn: () => apiGet<TrendingThreats>("/api/community/trending-threats"),
+    staleTime: 60_000, // refresh every 60s
+  });
+}
+
+/**
+ * POST /api/community/report
+ */
+export function useReportThreat(): UseMutationResult<
+  { success: boolean; message: string },
+  Error,
+  { url: string; deviceId: string; reportedVerdict: "malicious" | "suspicious" }
+> {
+  return useMutation({
+    mutationFn: (data) => apiPost("/api/community/report", data),
+  });
+}
+
+/**
+ * GET /api/user/patterns?deviceId=
+ */
+export function useGetUserPatterns(deviceId: string | null): UseQueryResult<UserPatterns> {
+  return useQuery({
+    queryKey: ["user", "patterns", deviceId],
+    queryFn: () => apiGet<UserPatterns>("/api/user/patterns", { deviceId: deviceId ?? undefined }),
+    enabled: !!deviceId,
+  });
+}
+
+/**
+ * POST /api/user/trust
+ */
+export function useTrustDomain(): UseMutationResult<
+  { success: boolean; domain: string; action: string },
+  Error,
+  { deviceId: string; domain: string; action: "trust" | "block" | "reset" }
+> {
+  return useMutation({
+    mutationFn: (data) => apiPost("/api/user/trust", data),
   });
 }

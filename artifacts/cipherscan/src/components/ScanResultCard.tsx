@@ -19,6 +19,63 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  // Resolve preview image URL:
+  // If the backend has an old dummy SVG placeholder ("CipherScan Security Sandbox"), discard it and load real website screenshot.
+  const resolvedImageUrl = React.useMemo(() => {
+    const rawUrl = scan.previewImageUrl;
+    const targetUrl = scan.finalUrl || scan.originalUrl || '';
+    const isHttp = Boolean(targetUrl.startsWith('http://') || targetUrl.startsWith('https://'));
+
+    // If it's the dummy "CipherScan Security Sandbox" placeholder SVG, immediately discard it for HTTP URLs
+    if (rawUrl && rawUrl.includes('data:image/svg+xml') && isHttp) {
+      return `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`;
+    }
+
+    if (rawUrl) {
+      if (
+        rawUrl.startsWith('data:') ||
+        rawUrl.startsWith('http://') ||
+        rawUrl.startsWith('https://')
+      ) {
+        return rawUrl;
+      }
+      const apiBase = (import.meta.env["VITE_API_BASE_URL"] as string | undefined ?? "").replace(/\/$/, "");
+      return apiBase ? `${apiBase}${rawUrl}` : rawUrl;
+    }
+
+    // If no preview URL provided by backend, load real cloud screenshot directly for HTTP websites
+    if (isHttp && targetUrl) {
+      return `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`;
+    }
+
+    return null;
+  }, [scan.previewImageUrl, scan.originalUrl, scan.finalUrl]);
+
+  const [currentSrc, setCurrentSrc] = useState<string | null>(resolvedImageUrl);
+
+  // Automatically reset image error state and sync currentSrc whenever a new scan result is loaded
+  React.useEffect(() => {
+    setCurrentSrc(resolvedImageUrl);
+    setImgError(false);
+  }, [resolvedImageUrl, scan.id]);
+
+  const handleImageError = () => {
+    const targetUrl = scan.finalUrl || scan.originalUrl || '';
+    const isHttp = Boolean(targetUrl.startsWith('http://') || targetUrl.startsWith('https://'));
+    const mshotsUrl = `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`;
+    const thumUrl = `https://image.thum.io/get/width/1280/crop/720/${targetUrl}`;
+
+    if (isHttp && currentSrc !== mshotsUrl && currentSrc !== thumUrl) {
+      setCurrentSrc(mshotsUrl);
+    } else if (isHttp && currentSrc === mshotsUrl) {
+      setCurrentSrc(thumUrl);
+    } else {
+      setImgError(true);
+    }
+  };
+
+  const activeImageSrc = !imgError ? (currentSrc || resolvedImageUrl) : null;
+
   const hasVirusTotalDetections = typeof scan.virusTotalScore === 'number' && scan.virusTotalScore > 0;
 
   return (
@@ -89,7 +146,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                       <ImageIcon size={14} />
                       Live Website Preview
                     </h4>
-                    {Boolean(scan.previewImageUrl && !imgError) && (
+                    {Boolean(activeImageSrc) && (
                       <button 
                         onClick={() => setIsZoomOpen(true)}
                         className="text-[10px] font-mono text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
@@ -99,18 +156,18 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                     )}
                   </div>
                   <div 
-                    onClick={() => { if (scan.previewImageUrl && !imgError) setIsZoomOpen(true); }}
+                    onClick={() => { if (activeImageSrc) setIsZoomOpen(true); }}
                     className={cn(
                       "aspect-video w-full rounded-md border border-border/50 bg-black/40 overflow-hidden relative group transition-all",
-                      scan.previewImageUrl && !imgError ? "cursor-pointer hover:border-primary/50" : ""
+                      activeImageSrc ? "cursor-pointer hover:border-primary/50" : ""
                     )}
                   >
-                    {scan.previewImageUrl && !imgError ? (
+                    {activeImageSrc ? (
                       <>
                         <img 
-                          src={scan.previewImageUrl} 
+                          src={activeImageSrc} 
                           alt="Target preview" 
-                          onError={() => setImgError(true)}
+                          onError={handleImageError}
                           className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-mono gap-1.5">
@@ -155,7 +212,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
       </Card>
 
       {/* High Resolution Lightbox Zoom Dialog */}
-      {isZoomOpen && scan.previewImageUrl && (
+      {isZoomOpen && activeImageSrc && (
         <div 
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
           onClick={() => setIsZoomOpen(false)}
@@ -178,7 +235,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
             </div>
             <div className="p-2 overflow-auto flex items-center justify-center bg-black/60 min-h-[300px]">
               <img 
-                src={scan.previewImageUrl} 
+                src={activeImageSrc} 
                 alt="High resolution target preview"
                 className="max-w-full max-h-[75vh] object-contain rounded"
               />
