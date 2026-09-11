@@ -104,9 +104,9 @@ export function createFallbackPreviewDataUri(url: string): string {
 }
 
 /**
- * Fetches a genuine screenshot of a website using cloud rendering CDN services
- * (WordPress mShots and Thum.io CDN).
- * Returns a data:image/jpeg;base64,... string, or null on failure.
+ * Fetches a genuine screenshot of a website using high-reliability cloud rendering services
+ * (Microlink API and S-Shot CDN).
+ * Returns a data:image/png;base64,... or data:image/jpeg;base64,... string, or null on failure.
  */
 export async function fetchCloudScreenshot(targetUrl: string): Promise<string | null> {
   if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
@@ -114,14 +114,14 @@ export async function fetchCloudScreenshot(targetUrl: string): Promise<string | 
   }
 
   const endpoints = [
-    `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`,
-    `https://image.thum.io/get/width/1280/crop/720/${targetUrl}`
+    `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
+    `https://mini.s-shot.ru/1024x768/JPEG/1024/Z100/?${encodeURIComponent(targetUrl)}`
   ];
 
   for (const endpoint of endpoints) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(endpoint, {
         headers: {

@@ -28,7 +28,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
 
     // If it's the dummy "CipherScan Security Sandbox" placeholder SVG, immediately discard it for HTTP URLs
     if (rawUrl && rawUrl.includes('data:image/svg+xml') && isHttp) {
-      return `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`;
+      return `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url`;
     }
 
     if (rawUrl) {
@@ -45,7 +45,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
 
     // If no preview URL provided by backend, load real cloud screenshot directly for HTTP websites
     if (isHttp && targetUrl) {
-      return `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`;
+      return `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url`;
     }
 
     return null;
@@ -62,13 +62,13 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
   const handleImageError = () => {
     const targetUrl = scan.finalUrl || scan.originalUrl || '';
     const isHttp = Boolean(targetUrl.startsWith('http://') || targetUrl.startsWith('https://'));
-    const mshotsUrl = `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1280&h=720`;
-    const thumUrl = `https://image.thum.io/get/width/1280/crop/720/${targetUrl}`;
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url`;
+    const sshotUrl = `https://mini.s-shot.ru/1024x768/JPEG/1024/Z100/?${encodeURIComponent(targetUrl)}`;
 
-    if (isHttp && currentSrc !== mshotsUrl && currentSrc !== thumUrl) {
-      setCurrentSrc(mshotsUrl);
-    } else if (isHttp && currentSrc === mshotsUrl) {
-      setCurrentSrc(thumUrl);
+    if (isHttp && currentSrc !== microlinkUrl && currentSrc !== sshotUrl) {
+      setCurrentSrc(microlinkUrl);
+    } else if (isHttp && currentSrc === microlinkUrl) {
+      setCurrentSrc(sshotUrl);
     } else {
       setImgError(true);
     }
