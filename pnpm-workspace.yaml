@@ -145,6 +145,17 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+  # ── Security patches: force-upgrade vulnerable transitive dependencies ──────
+  # tar (CRITICAL/HIGH): Arbitrary file read/write, DoS via decompression — all CVEs patched in v7+
+  tar: "^7.5.22"
+  # path-to-regexp (HIGH): Backtracking ReDoS in Express routing
+  path-to-regexp: ">=8.0.0"
+  # undici (HIGH/MODERATE): WebSocket DoS, CRLF injection, cookie injection, smuggling
+  undici: ">=6.27.0"
+  # qs (MODERATE): Array-limit bypass, Denial of Service
+  qs: ">=6.13.0"
+  # ajv (MODERATE): ReDoS when using $data option
+  ajv: ">=8.17.1"
 
 allowBuilds:
   esbuild: true
