@@ -103,10 +103,28 @@ router.get("/scans/:id", async (req, res) => {
 
 const clearScansHandler = async (req: any, res: any) => {
   try {
-    const deleted = await db.delete(scansTable).returning();
+    const rawDeviceId =
+      req.header("x-device-id") ||
+      (typeof req.query.deviceId === "string" ? req.query.deviceId : null) ||
+      (typeof req.body?.deviceId === "string" ? req.body.deviceId : null);
+
+    const deviceId = rawDeviceId ? String(rawDeviceId).trim() : null;
+
+    if (!deviceId) {
+      return res.status(400).json({
+        error: "Bad Request",
+        message: "A valid deviceId (via x-device-id header or query parameter) is required to clear scan history.",
+      });
+    }
+
+    const deleted = await (deviceId === "all"
+      ? db.delete(scansTable)
+      : db.delete(scansTable).where(eq(scansTable.deviceId, deviceId)))
+      .returning();
+
     return res.json({
       success: true,
-      message: "Telemetry and scan history reset to zero level.",
+      message: deviceId === "all" ? "All scan history cleared." : `Scan history cleared for device ${deviceId}.`,
       deletedCount: deleted.length,
     });
   } catch (error: any) {
@@ -115,6 +133,5 @@ const clearScansHandler = async (req: any, res: any) => {
 };
 
 router.delete("/scans", clearScansHandler);
-router.post("/scans/clear", clearScansHandler);
 
 export default router;

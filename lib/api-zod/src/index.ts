@@ -22,10 +22,10 @@ export type HealthCheckResponse = z.infer<typeof HealthCheckResponse>;
  * POST /api/analyze — request body
  */
 export const AnalyzeUrlBody = z.object({
-  targetUrl: z.string().min(1, "targetUrl is required"),
+  targetUrl: z.string().min(1, "targetUrl is required").max(2048, "targetUrl must not exceed 2048 characters"),
   triggerType: z.string().optional().default("manual"),
-  deviceId: z.string().optional().nullable(),
-  deviceName: z.string().optional().nullable(),
+  deviceId: z.string().max(128).optional().nullable(),
+  deviceName: z.string().max(128).optional().nullable(),
 });
 export type AnalyzeUrlBody = z.infer<typeof AnalyzeUrlBody>;
 

@@ -13,7 +13,25 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "BACKEND_URL is not configured." });
   }
 
-  const upstream = `${backendUrl.replace(/\/$/, "")}${req.url || "/"}`;
+  // Only allow expected HTTP methods
+  const allowedMethods = new Set(["GET", "POST", "DELETE", "HEAD", "OPTIONS"]);
+  const method = (req.method || "GET").toUpperCase();
+  if (!allowedMethods.has(method)) {
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
+
+  // Prevent confused deputy global data purges: DELETE requires explicit device identification
+  const rawUrl = req.url || "/";
+  if (method === "DELETE" && !req.headers["x-device-id"] && !rawUrl.includes("deviceId=")) {
+    return res.status(400).json({
+      error: "Bad Request",
+      message: "DELETE requests through the proxy require an explicit deviceId parameter or x-device-id header."
+    });
+  }
+
+  // Sanitize path to prevent upstream traversal
+  const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+  const upstream = `${backendUrl.replace(/\/$/, "")}${cleanPath}`;
 
   const forwardHeaders = {};
   const skipHeaders = new Set([

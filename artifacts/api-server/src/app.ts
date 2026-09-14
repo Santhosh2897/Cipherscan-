@@ -13,6 +13,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app: Express = express();
 
+app.set("trust proxy", 1);
+
+// Standard HTTP security headers
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-XSS-Protection", "0");
+  next();
+});
+
 app.use(
   pinoHttp({
     logger,
@@ -55,8 +66,17 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+// Global rate limiter for API endpoints
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120, // 120 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api", globalLimiter);
 
 // Rate limit: each request may launch a full headless Chromium instance
 // and call paid third-party APIs (VirusTotal, Google Safe Browsing), so

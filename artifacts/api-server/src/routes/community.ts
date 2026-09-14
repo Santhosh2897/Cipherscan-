@@ -198,14 +198,34 @@ router.get("/user/patterns", async (req, res): Promise<void> => {
 // ─── POST /api/user/trust ────────────────────────────────────────────────────
 /** Manual trust / block override by the user */
 router.post("/user/trust", async (req, res): Promise<void> => {
-  const { deviceId, domain, action } = req.body as {
+  const { deviceId: rawDevId, domain: rawDomain, action } = req.body as {
     deviceId?: string;
     domain?: string;
     action?: "trust" | "block" | "reset";
   };
 
+  const deviceId = rawDevId?.trim();
+  const domain = rawDomain?.trim().toLowerCase();
+
   if (!deviceId || !domain || !action) {
     res.status(400).json({ error: "deviceId, domain, and action are required" });
+    return;
+  }
+
+  if (!["trust", "block", "reset"].includes(action)) {
+    res.status(400).json({ error: "action must be 'trust', 'block', or 'reset'" });
+    return;
+  }
+
+  // Domain syntax validation to prevent script or header injection
+  const domainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+  if (!domainRegex.test(domain) || domain.length > 253) {
+    res.status(400).json({ error: "Invalid domain format" });
+    return;
+  }
+
+  if (deviceId.length > 128) {
+    res.status(400).json({ error: "Invalid deviceId" });
     return;
   }
 

@@ -110,14 +110,44 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                   <Globe size={12} />
                   Original Target
                 </p>
-                <div className="flex items-start gap-3">
-                  <a href={scan.originalUrl} target="_blank" rel="noreferrer" className="text-lg font-medium text-foreground hover:text-primary transition-colors break-all">
-                    {scan.originalUrl}
-                  </a>
-                  <a href={scan.originalUrl} target="_blank" rel="noreferrer" className="mt-1 text-muted-foreground hover:text-primary">
-                    <ExternalLink size={16} />
-                  </a>
-                </div>
+                {(() => {
+                  const safeHref = (() => {
+                    const trimmed = (scan.originalUrl || "").trim();
+                    const lower = trimmed.toLowerCase();
+                    return lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("upi://")
+                      ? trimmed
+                      : null;
+                  })();
+
+                  return (
+                    <div className="flex items-start gap-3">
+                      {safeHref ? (
+                        <>
+                          <a
+                            href={safeHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-lg font-medium text-foreground hover:text-primary transition-colors break-all"
+                          >
+                            {scan.originalUrl}
+                          </a>
+                          <a
+                            href={safeHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 text-muted-foreground hover:text-primary"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-lg font-medium text-destructive/80 font-mono break-all">
+                          {scan.originalUrl} (Unsafe link protocol blocked)
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {scan.finalUrl !== scan.originalUrl && (

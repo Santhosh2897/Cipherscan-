@@ -4,6 +4,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { logger } from "./logger.js";
+import { assertUrlIsSafe } from "./urlSafety.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // public/previews is served as static files by app.ts
@@ -113,6 +114,13 @@ export async function fetchCloudScreenshot(targetUrl: string): Promise<string | 
     return null;
   }
 
+  try {
+    await assertUrlIsSafe(targetUrl);
+  } catch {
+    logger.warn({ targetUrl }, "fetchCloudScreenshot blocked unsafe target URL");
+    return null;
+  }
+
   const endpoints = [
     `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
     `https://mini.s-shot.ru/1024x768/JPEG/1024/Z100/?${encodeURIComponent(targetUrl)}`
@@ -183,13 +191,27 @@ export async function analyzeSandbox(targetUrl: string, serverBaseUrl = ""): Pro
 
     const page = await context.newPage();
 
-    // Only abort continuous video/audio streams to save memory, allow standard images & CSS styles
-    await page.route("**/*", (route) => {
+    // Intercept all requests: block continuous streams and strictly enforce SSRF safety on all navigations & subresources
+    await page.route("**/*", async (route) => {
+      const requestUrl = route.request().url();
       const resourceType = route.request().resourceType();
+
       if (resourceType === "media") {
         return route.abort();
       }
-      return route.continue();
+
+      // Allow data URIs
+      if (requestUrl.startsWith("data:")) {
+        return route.continue();
+      }
+
+      try {
+        await assertUrlIsSafe(requestUrl);
+        return route.continue();
+      } catch (err: any) {
+        logger.warn({ requestUrl, error: err.message }, "Playwright sandbox blocked request to unsafe/internal address");
+        return route.abort("blockedbyclient");
+      }
     });
 
     page.on("response", (response) => {

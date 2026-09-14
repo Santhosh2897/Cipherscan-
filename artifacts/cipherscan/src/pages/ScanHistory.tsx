@@ -34,8 +34,13 @@ export default function ScanHistory() {
   };
 
   const handleClearHistory = () => {
-    if (window.confirm("Are you sure you want to clear all scan history records?")) {
-      clearScansMutation.mutate(undefined, {
+    const targetDevice = filterDeviceId || 'all';
+    const confirmMsg = filterDeviceId
+      ? `Are you sure you want to clear scan history records for device "${filterDeviceId}"?`
+      : "Are you sure you want to clear all scan history records?";
+
+    if (window.confirm(confirmMsg)) {
+      clearScansMutation.mutate(targetDevice, {
         onSuccess: () => {
           queryClient.invalidateQueries();
         }
@@ -123,7 +128,7 @@ export default function ScanHistory() {
             className="font-mono text-xs gap-1.5 bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-900/60"
           >
             <Trash2 size={14} />
-            CLEAR ALL
+            {filterDeviceId ? "CLEAR DEVICE" : "CLEAR ALL"}
           </Button>
         </div>
       </div>

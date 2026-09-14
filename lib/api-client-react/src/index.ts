@@ -105,11 +105,14 @@ export function useAnalyzeUrl(): UseMutationResult<ScanResult, Error, { data: An
 }
 
 /**
- * DELETE /api/scans — Wipes all scan history records from DB
+ * DELETE /api/scans — Wipes scan history records from DB (optionally filtered by deviceId)
  */
-export function useClearScans(): UseMutationResult<ClearScansResponse, Error, void> {
+export function useClearScans(): UseMutationResult<ClearScansResponse, Error, string | void> {
   return useMutation({
-    mutationFn: () => apiDelete<ClearScansResponse>("/api/scans"),
+    mutationFn: (deviceId?: string | void) => {
+      const url = deviceId ? `/api/scans?deviceId=${encodeURIComponent(deviceId)}` : "/api/scans?deviceId=all";
+      return apiDelete<ClearScansResponse>(url);
+    },
   });
 }
 
