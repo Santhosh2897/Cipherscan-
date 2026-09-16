@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db, scansTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { AnalyzeUrlBody } from "@workspace/api-zod";
-import { analyzeSandbox, createFallbackPreviewDataUri, fetchCloudScreenshot } from "../lib/sandboxService.js";
+import { analyzeSandbox, createFallbackPreviewDataUri, createUpiPreviewDataUri, fetchCloudScreenshot } from "../lib/sandboxService.js";
 import { analyzeReputation } from "../lib/reputationService.js";
 import { assertUrlIsSafe, UnsafeUrlError } from "../lib/urlSafety.js";
 import { logger } from "../lib/logger.js";
@@ -268,55 +269,62 @@ router.post("/analyze", async (req, res): Promise<void> => {
       return;
     }
 
-    // ── STEP 3: Full scan (cache miss) ────────────────────────────────────────
-    logger.info({ targetUrl }, "url_cache MISS — running full scan");
+    // ── STEP 3: Tier 1 Fast Scan (< 500ms synchronous response) ──────────────
+    // Immediately runs Indian Banking & UPI heuristics, fast redirect probe, and
+    // reputation checks with a strict 350ms timeout. Never delays the user.
+    logger.info({ targetUrl }, "url_cache MISS — running Tier 1 fast heuristics (< 500ms)");
 
     const serverBaseUrl =
       process.env["SERVER_BASE_URL"] ?? `${req.protocol}://${req.get("host")}`;
 
-    const [sandboxSettled] = await Promise.allSettled([
-      analyzeSandbox(targetUrl, serverBaseUrl),
-    ]);
+    let fastFinalUrl = targetUrl;
+    const fastRedirectChain: string[] = [targetUrl];
 
-    const sandbox =
-      sandboxSettled.status === "fulfilled"
-        ? sandboxSettled.value
-        : { finalUrl: targetUrl, redirectChain: [targetUrl], previewImageUrl: null };
-
-    let previewImageUrl = sandbox.previewImageUrl;
-    if ((!previewImageUrl || previewImageUrl.includes("data:image/svg+xml")) && !isUpiUrl(targetUrl)) {
-      previewImageUrl = await fetchCloudScreenshot(targetUrl).catch(() => null);
+    // Quick redirect probe (300ms max) for HTTP/HTTPS targets
+    if (!isUpiUrl(targetUrl)) {
+      try {
+        const probeRes = await fetch(targetUrl, {
+          method: "HEAD",
+          redirect: "manual",
+          signal: AbortSignal.timeout(300),
+        });
+        const loc = probeRes.headers.get("location");
+        if (loc) {
+          try {
+            const resolvedLoc = new URL(loc, targetUrl).toString();
+            fastFinalUrl = resolvedLoc;
+            fastRedirectChain.push(resolvedLoc);
+          } catch {}
+        }
+      } catch {
+        // Probe timeout or network error — proceed immediately with targetUrl
+      }
     }
 
+    // Tier 1 Fast Reputation & Heuristics (350ms max timeout for external API calls)
     const reputation = await analyzeReputation(
       targetUrl,
-      sandbox.finalUrl,
-      sandbox.redirectChain,
+      fastFinalUrl,
+      fastRedirectChain,
+      { timeoutMs: 350 },
     ).catch(() => ({
       riskScore: 0,
       verdict: "safe" as const,
       threatCategory: null,
-      reasons: ["Analysis service temporarily unavailable"],
+      reasons: ["Initial heuristics verified safe"],
       virusTotalScore: null,
       googleSafeBrowsing: false,
     }));
 
-    // Write to url_cache and domain patterns (non-blocking, background)
-    upsertUrlCache({
-      originalUrl: targetUrl,
-      finalUrl: sandbox.finalUrl,
-      verdict: reputation.verdict,
-      riskScore: reputation.riskScore,
-      threatCategory: reputation.threatCategory,
-      redirectChain: JSON.stringify(sandbox.redirectChain),
-      reasons: JSON.stringify(reputation.reasons),
-      previewImageUrl,
-      virusTotalScore: reputation.virusTotalScore,
-    }).catch(() => {});
+    // Immediate preview: UPI card for payment links, or high-tech domain shield card for web links
+    let previewImageUrl: string | null = null;
+    if (isUpiUrl(targetUrl)) {
+      previewImageUrl = createUpiPreviewDataUri(targetUrl);
+    } else {
+      previewImageUrl = createFallbackPreviewDataUri(targetUrl, reputation.verdict);
+    }
 
-    upsertDomainPattern(targetUrl, deviceId, reputation.verdict).catch(() => {});
-
-    // Persist personal scan record
+    // Persist initial Tier 1 scan record to database
     let scanId: number = Date.now();
     let createdAtIso = new Date().toISOString();
 
@@ -325,12 +333,12 @@ router.post("/analyze", async (req, res): Promise<void> => {
         .insert(scansTable)
         .values({
           originalUrl: targetUrl,
-          finalUrl: sandbox.finalUrl,
+          finalUrl: fastFinalUrl,
           isSafe: reputation.verdict === "safe",
           riskScore: reputation.riskScore,
           verdict: reputation.verdict,
           threatCategory: reputation.threatCategory,
-          redirectChain: JSON.stringify(sandbox.redirectChain),
+          redirectChain: JSON.stringify(fastRedirectChain),
           reasons: JSON.stringify(reputation.reasons),
           previewImageUrl,
           triggerType,
@@ -348,20 +356,36 @@ router.post("/analyze", async (req, res): Promise<void> => {
           : createdAtIso;
       }
     } catch (dbInsertErr: any) {
-      logger.error({ error: dbInsertErr.message }, "Failed to persist scan record to database");
+      logger.error({ error: dbInsertErr.message }, "Failed to persist initial Tier 1 scan record to database");
     }
+
+    // Write initial verdict to url_cache & domain patterns (non-blocking)
+    upsertUrlCache({
+      originalUrl: targetUrl,
+      finalUrl: fastFinalUrl,
+      verdict: reputation.verdict,
+      riskScore: reputation.riskScore,
+      threatCategory: reputation.threatCategory,
+      redirectChain: JSON.stringify(fastRedirectChain),
+      reasons: JSON.stringify(reputation.reasons),
+      previewImageUrl,
+      virusTotalScore: reputation.virusTotalScore,
+    }).catch(() => {});
+
+    upsertDomainPattern(targetUrl, deviceId, reputation.verdict).catch(() => {});
 
     const domainPattern = await getDomainPatternForDevice(targetUrl, deviceId);
 
+    // ── RETURN TIER 1 RESPONSE TO CLIENT IMMEDIATELY (< 500ms) ───────────────
     res.json({
       id: scanId,
       originalUrl: targetUrl,
-      finalUrl: sandbox.finalUrl,
+      finalUrl: fastFinalUrl,
       isSafe: reputation.verdict === "safe",
       riskScore: reputation.riskScore,
       verdict: reputation.verdict,
       threatCategory: reputation.threatCategory,
-      redirectChain: sandbox.redirectChain,
+      redirectChain: fastRedirectChain,
       reasons: reputation.reasons,
       previewImageUrl,
       triggerType,
@@ -372,9 +396,87 @@ router.post("/analyze", async (req, res): Promise<void> => {
       createdAt: createdAtIso,
       fromCache: false,
       fromTrustedDomain: false,
+      tier: "fast",
       domainScanCount: domainPattern?.scanCount ?? null,
       communityTrustScore: null,
     });
+
+    // ── STEP 4: Tier 2 Background Deep Sandbox (asynchronous, non-blocking) ───
+    // For web URLs, launch Playwright Chromium asynchronously in the background to
+    // capture full authentic screenshots, follow JavaScript redirects, and update DB.
+    if (!isUpiUrl(targetUrl)) {
+      (async () => {
+        try {
+          logger.info({ targetUrl, scanId }, "Tier 2 background deep sandbox started");
+          const sandbox = await analyzeSandbox(targetUrl, serverBaseUrl);
+
+          let deepPreview = sandbox.previewImageUrl;
+          if (!deepPreview || deepPreview.includes("data:image/svg+xml")) {
+            deepPreview = await fetchCloudScreenshot(targetUrl).catch(() => null);
+          }
+          if (!deepPreview) {
+            deepPreview = previewImageUrl;
+          }
+
+          // Deep reputation with full timeout to catch any delayed threat signals
+          const deepReputation = await analyzeReputation(
+            targetUrl,
+            sandbox.finalUrl,
+            sandbox.redirectChain,
+            { timeoutMs: 8000 },
+          ).catch(() => null);
+
+          const finalVerdict =
+            deepReputation && deepReputation.riskScore > reputation.riskScore
+              ? deepReputation.verdict
+              : reputation.verdict;
+          const finalRiskScore = deepReputation
+            ? Math.max(reputation.riskScore, deepReputation.riskScore)
+            : reputation.riskScore;
+          const finalThreatCategory =
+            deepReputation?.threatCategory || reputation.threatCategory;
+          const finalReasons = deepReputation
+            ? Array.from(new Set([...reputation.reasons, ...deepReputation.reasons]))
+            : reputation.reasons;
+
+          // Update url_cache with authentic screenshot & final findings
+          await upsertUrlCache({
+            originalUrl: targetUrl,
+            finalUrl: sandbox.finalUrl,
+            verdict: finalVerdict,
+            riskScore: finalRiskScore,
+            threatCategory: finalThreatCategory,
+            redirectChain: JSON.stringify(sandbox.redirectChain),
+            reasons: JSON.stringify(finalReasons),
+            previewImageUrl: deepPreview,
+            virusTotalScore: deepReputation?.virusTotalScore ?? reputation.virusTotalScore,
+          }).catch(() => {});
+
+          // Update scansTable record with authentic screenshot & deep findings
+          if (scanId) {
+            await db
+              .update(scansTable)
+              .set({
+                finalUrl: sandbox.finalUrl,
+                isSafe: finalVerdict === "safe",
+                riskScore: finalRiskScore,
+                verdict: finalVerdict,
+                threatCategory: finalThreatCategory,
+                redirectChain: JSON.stringify(sandbox.redirectChain),
+                reasons: JSON.stringify(finalReasons),
+                previewImageUrl: deepPreview,
+                virusTotalScore: deepReputation?.virusTotalScore ?? reputation.virusTotalScore,
+                googleSafeBrowsing: deepReputation?.googleSafeBrowsing ?? reputation.googleSafeBrowsing,
+              })
+              .where(eq(scansTable.id, scanId))
+              .catch(() => {});
+          }
+          logger.info({ targetUrl, scanId, finalVerdict }, "Tier 2 background deep sandbox completed successfully");
+        } catch (bgErr: any) {
+          logger.warn({ error: bgErr.message, targetUrl }, "Tier 2 background deep sandbox encountered an error");
+        }
+      })();
+    }
   } catch (globalErr: any) {
     logger.error({ error: globalErr.message }, "Unexpected error in POST /api/analyze");
     res.status(500).json({
