@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
+import Login, { isAuthenticated, setAuthenticated } from '@/pages/Login';
 
 // Pages
 import Dashboard from '@/pages/Dashboard';
@@ -11,7 +13,6 @@ import Analyze from '@/pages/Analyze';
 import ScanHistory from '@/pages/ScanHistory';
 import ScanDetail from '@/pages/ScanDetail';
 import ThreatIntel from '@/pages/ThreatIntel';
-
 
 // Force dark mode
 if (typeof document !== 'undefined') {
@@ -43,13 +44,36 @@ function Router() {
   );
 }
 
+/**
+ * AuthGuard: Shows the PIN login screen until the user authenticates.
+ * If VITE_DASHBOARD_PIN is not set (local dev), always passes through.
+ */
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const [authed, setAuthed] = useState(() => isAuthenticated());
+
+  if (!authed) {
+    return (
+      <Login
+        onSuccess={() => {
+          setAuthenticated();
+          setAuthed(true);
+        }}
+      />
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
+        <AuthGuard>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+        </AuthGuard>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

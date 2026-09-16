@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import crypto from "node:crypto";
 
 export function requireApiKey(req: Request, res: Response, next: NextFunction) {
-  // Allow health checks and public URL analysis without an API key
-  if (req.path === "/healthz" || req.path === "/analyze") {
+  // Only health checks are public — everything else (including /analyze) requires a key
+  if (req.path === "/healthz") {
     return next();
   }
 
