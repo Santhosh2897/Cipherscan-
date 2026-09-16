@@ -7,7 +7,13 @@
  * Rate limits (per IP, per minute):
  *  - /api/analyze : 10 requests  (expensive: Playwright + VirusTotal + GSB)
  *  - all other    : 60 requests
+ *
+ * Auth: Every request must carry a valid X-Dashboard-Token issued by /api/auth.
+ * Token is a 1-hour HMAC derived from DASHBOARD_PIN (server-side only, never
+ * sent to the browser).
  */
+
+import { verifyToken } from "./auth.js";
 
 // ─── In-memory rate limiter ───────────────────────────────────────────────────
 // Map<ip, { count, windowStart }>
@@ -61,7 +67,21 @@ export default async function handler(req, res) {
   const rawUrl = req.url || "/";
   const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
 
-  // ─── Rate limiting ───────────────────────────────────────────────────────────
+  // ─── Dashboard token verification ────────────────────────────────────────────
+  // If DASHBOARD_PIN is set, every proxy request must carry a valid token
+  // issued by /api/auth. Dev mode (no pin configured) always passes through.
+  const configuredPin = process.env.DASHBOARD_PIN;
+  if (configuredPin && configuredPin.trim() !== "") {
+    const dashboardToken = req.headers["x-dashboard-token"] || "";
+    if (!verifyToken(configuredPin.trim(), dashboardToken)) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Invalid or expired session token. Please re-authenticate.",
+      });
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const clientIp =
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
     req.socket?.remoteAddress ||

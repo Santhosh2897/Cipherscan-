@@ -5,7 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
-import Login, { isAuthenticated, setAuthenticated } from '@/pages/Login';
+import Login, { isAuthenticated, getStoredToken } from '@/pages/Login';
 
 // Pages
 import Dashboard from '@/pages/Dashboard';
@@ -19,12 +19,37 @@ if (typeof document !== 'undefined') {
   document.documentElement.classList.add('dark');
 }
 
+/**
+ * Patch global fetch so every /api/* request automatically carries the
+ * X-Dashboard-Token header. This covers all TanStack Query hooks without
+ * touching them individually.
+ */
+const _nativeFetch = window.fetch.bind(window);
+window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const isApiCall = url.startsWith('/api/') || url.startsWith('./api/');
+
+  if (isApiCall) {
+    const token = getStoredToken();
+    if (token) {
+      init = {
+        ...init,
+        headers: {
+          ...(init?.headers || {}),
+          'x-dashboard-token': token,
+        },
+      };
+    }
+  }
+  return _nativeFetch(input, init);
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      refetchInterval: false, // Auto-refresh removed; user triggers manual refresh on demand
-      staleTime: 0, // Always refetch when invalidated (e.g. after a new scan is submitted)
+      refetchInterval: false,
+      staleTime: 0,
     },
   },
 });
@@ -45,8 +70,8 @@ function Router() {
 }
 
 /**
- * AuthGuard: Shows the PIN login screen until the user authenticates.
- * If VITE_DASHBOARD_PIN is not set (local dev), always passes through.
+ * AuthGuard: Shows PIN login until authenticated.
+ * No DASHBOARD_PIN configured on server → always passes through (dev mode).
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState(() => isAuthenticated());
@@ -54,10 +79,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (!authed) {
     return (
       <Login
-        onSuccess={() => {
-          setAuthenticated();
-          setAuthed(true);
-        }}
+        onSuccess={() => setAuthed(true)}
       />
     );
   }
@@ -81,3 +103,4 @@ function App() {
 }
 
 export default App;
+
