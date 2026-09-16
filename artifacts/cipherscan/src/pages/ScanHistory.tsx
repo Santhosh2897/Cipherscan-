@@ -27,6 +27,8 @@ export default function ScanHistory() {
     devices,
     selectedDevice,
     isFleetView,
+    isAdmin,
+    isDeviceUser,
   } = useDevice();
 
   const clearScansMutation = useClearScans();
@@ -147,37 +149,47 @@ export default function ScanHistory() {
 
       {/* Scope Switcher: All Fleet Scans vs Filtered Devices */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <button
-          type="button"
-          onClick={clearDeviceFilter}
-          className={cn(
-            "px-3 py-1.5 text-xs font-mono rounded-md border transition-all flex items-center gap-1.5 shrink-0",
-            isFleetView
-              ? "bg-primary/20 text-primary border-primary/50 font-bold shadow-sm"
-              : "bg-black/20 text-muted-foreground border-border/40 hover:text-foreground hover:bg-black/40"
-          )}
-        >
-          <Globe size={12} />
-          ALL FLEET SCANS ({isFleetView ? (data?.items?.length ?? 0) : 'Fleet'})
-        </button>
+        {isAdmin ? (
+          <>
+            <button
+              type="button"
+              onClick={clearDeviceFilter}
+              className={cn(
+                "px-3 py-1.5 text-xs font-mono rounded-md border transition-all flex items-center gap-1.5 shrink-0",
+                isFleetView
+                  ? "bg-primary/20 text-primary border-primary/50 font-bold shadow-sm"
+                  : "bg-black/20 text-muted-foreground border-border/40 hover:text-foreground hover:bg-black/40"
+              )}
+            >
+              <Globe size={12} />
+              ALL FLEET SCANS ({isFleetView ? (data?.items?.length ?? 0) : 'Fleet'})
+            </button>
 
-        {devices.map((dev) => (
-          <button
-            key={dev.deviceId}
-            type="button"
-            onClick={() => setSelectedDeviceId(dev.deviceId)}
-            className={cn(
-              "px-3 py-1.5 text-xs font-mono rounded-md border transition-all flex items-center gap-1.5 shrink-0",
-              selectedDeviceId === dev.deviceId
-                ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-sm"
-                : "bg-black/20 text-muted-foreground border-border/40 hover:text-foreground hover:bg-black/40"
-            )}
-          >
-            <Smartphone size={12} />
-            <span>{dev.deviceName || dev.deviceId.slice(0, 8)}</span>
-            <span className="opacity-60 text-[10px]">({dev.totalScans})</span>
-          </button>
-        ))}
+            {devices.map((dev) => (
+              <button
+                key={dev.deviceId}
+                type="button"
+                onClick={() => setSelectedDeviceId(dev.deviceId)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-mono rounded-md border transition-all flex items-center gap-1.5 shrink-0",
+                  selectedDeviceId === dev.deviceId
+                    ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-sm"
+                    : "bg-black/20 text-muted-foreground border-border/40 hover:text-foreground hover:bg-black/40"
+                )}
+              >
+                <Smartphone size={12} />
+                <span>{dev.deviceName || dev.deviceId.slice(0, 8)}</span>
+                <span className="opacity-60 text-[10px]">({dev.totalScans})</span>
+              </button>
+            ))}
+          </>
+        ) : (
+          <div className="px-3 py-1.5 text-xs font-mono rounded-md border bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-semibold shadow-sm flex items-center gap-2">
+            <Smartphone size={13} className="text-cyan-400" />
+            <span>{selectedDevice?.deviceName || 'Your Device'}</span>
+            <span className="opacity-70 text-[11px] font-normal">({data?.items?.length ?? 0} scans)</span>
+          </div>
+        )}
       </div>
 
       <Card className="border-border/50 bg-card/50 backdrop-blur p-3 sm:p-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between shrink-0">

@@ -24,7 +24,7 @@ import { DeviceSelector, ActiveDeviceBanner } from '@/components/DeviceSelector'
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { selectedDeviceId, isFleetView, selectedDevice, clearDeviceFilter } = useDevice();
+  const { selectedDeviceId, isFleetView, selectedDevice, clearDeviceFilter, isAdmin, isDeviceUser } = useDevice();
 
   const queryParam = selectedDeviceId ? { deviceId: selectedDeviceId } : undefined;
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats(queryParam);
@@ -99,16 +99,23 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
             <Crosshair className="text-primary shrink-0" size={24} />
-            <span>COMMAND CENTER</span>
+            <span>{isDeviceUser ? 'DEVICE DEFENSE CENTER' : 'COMMAND CENTER'}</span>
             {!isFleetView && (
               <Badge variant="outline" className="text-xs font-mono bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
                 {selectedDevice?.deviceName || 'DEVICE VIEW'}
+              </Badge>
+            )}
+            {isAdmin && (
+              <Badge variant="outline" className="text-[10px] font-mono bg-blue-500/10 text-blue-300 border-blue-500/30 hidden sm:inline-flex">
+                ADMIN
               </Badge>
             )}
           </h1>
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
             {isFleetView
               ? 'Real-time threat intelligence & mobile ecosystem defense status.'
+              : isDeviceUser
+              ? `Real-time protection & scan telemetry for your device ${selectedDevice?.deviceName || selectedDeviceId}.`
               : `Scoped telemetry & scan records for device ${selectedDevice?.deviceName || selectedDeviceId}.`}
           </p>
         </div>

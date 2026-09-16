@@ -71,13 +71,49 @@ export default async function handler(req, res) {
   // If DASHBOARD_PIN is set, every proxy request must carry a valid token
   // issued by /api/auth. Dev mode (no pin configured) always passes through.
   const configuredPin = process.env.DASHBOARD_PIN;
+  let authResult = { valid: true, role: "admin" };
   if (configuredPin && configuredPin.trim() !== "") {
     const dashboardToken = req.headers["x-dashboard-token"] || "";
-    if (!verifyToken(configuredPin.trim(), dashboardToken)) {
+    authResult = verifyToken(configuredPin.trim(), dashboardToken);
+    if (!authResult.valid) {
       return res.status(401).json({
         error: "Unauthorized",
         message: "Invalid or expired session token. Please re-authenticate.",
       });
+    }
+  }
+
+  // ─── Role Enforcement & Device Isolation ─────────────────────────────────────
+  let effectivePath = cleanPath;
+  if (authResult.role === "device") {
+    const userDeviceId = authResult.deviceId;
+
+    // Block device users from wiping all scan records
+    if (method === "DELETE" && (rawUrl.includes("deviceId=all") || !rawUrl.includes("deviceId="))) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Device accounts can only clear their own device history.",
+      });
+    }
+
+    // Inspect parsed URL to check query parameters
+    const parsed = new URL(cleanPath, "http://localhost");
+    const requestedDeviceId = parsed.searchParams.get("deviceId");
+
+    // If attempting to query another device's data explicitly -> 403 Forbidden
+    if (requestedDeviceId && requestedDeviceId !== userDeviceId) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: `Access denied. Token is restricted to device ${userDeviceId}.`,
+      });
+    }
+
+    // Automatically scope scans/stats endpoints to this device if not present
+    if (["/api/scans", "/api/stats", "/api/stats/timeline", "/api/stats/threats"].some((p) => parsed.pathname.startsWith(p))) {
+      if (!requestedDeviceId) {
+        parsed.searchParams.set("deviceId", userDeviceId);
+        effectivePath = parsed.pathname + parsed.search;
+      }
     }
   }
   // ─────────────────────────────────────────────────────────────────────────────
@@ -112,7 +148,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const upstream = `${backendUrl.replace(/\/$/, "")}${cleanPath}`;
+  const upstream = `${backendUrl.replace(/\/$/, "")}${effectivePath}`;
 
   const forwardHeaders = {};
   const skipHeaders = new Set([

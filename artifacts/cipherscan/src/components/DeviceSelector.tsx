@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDevice } from '@/context/DeviceContext';
-import { Smartphone, Globe, Check, ChevronDown, X, Shield, Filter, Search } from 'lucide-react';
+import { Smartphone, Globe, Check, ChevronDown, X, Shield, Filter, Lock, Unlock, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -11,10 +11,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
 export function DeviceSelector({ className }: { className?: string }) {
   const {
+    role,
+    isAdmin,
+    isDeviceUser,
     selectedDeviceId,
     setSelectedDeviceId,
     clearDeviceFilter,
@@ -22,10 +33,16 @@ export function DeviceSelector({ className }: { className?: string }) {
     selectedDevice,
     isFleetView,
     isLoadingDevices,
+    unlockAdmin,
+    logout,
   } = useDevice();
 
   const [customInput, setCustomInput] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,14 +53,112 @@ export function DeviceSelector({ className }: { className?: string }) {
     }
   };
 
+  const handleUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPin.trim()) return;
+    setIsVerifyingPin(true);
+    setAdminError('');
+
+    const res = await unlockAdmin(adminPin.trim());
+    setIsVerifyingPin(false);
+    if (res.ok) {
+      setShowAdminModal(false);
+      setAdminPin('');
+    } else {
+      setAdminError(res.error || 'Incorrect Admin PIN');
+    }
+  };
+
   const truncateId = (id: string) => {
     if (!id) return '';
     if (id.length <= 14) return id;
     return `${id.slice(0, 6)}...${id.slice(-4)}`;
   };
 
+  // If in Device Mode (isolated user): show fixed device pill + Admin Unlock option
+  if (isDeviceUser) {
+    return (
+      <div className={`flex flex-wrap items-center gap-2 ${className || ''}`}>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/40 text-cyan-300 font-mono text-xs shadow-[0_0_12px_rgba(6,182,212,0.15)]">
+          <Smartphone size={14} className="text-cyan-400 shrink-0" />
+          <span className="font-semibold truncate max-w-[180px]">
+            {selectedDevice?.deviceName || 'Device'}: {truncateId(selectedDeviceId)}
+          </span>
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse ml-0.5" />
+          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-cyan-500/30 text-cyan-300 font-mono">
+            DEVICE VIEW
+          </Badge>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAdminModal(true)}
+          className="h-8 font-mono text-xs gap-1.5 border-border/60 text-muted-foreground hover:text-foreground"
+        >
+          <KeyRound size={13} className="text-amber-400" />
+          <span className="hidden sm:inline">Admin Login</span>
+        </Button>
+
+        {/* Admin Unlock Modal */}
+        <Dialog open={showAdminModal} onOpenChange={setShowAdminModal}>
+          <DialogContent className="sm:max-w-md bg-gray-900 border-gray-800 text-white font-mono">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-cyan-400 font-mono text-base">
+                <Shield size={18} />
+                <span>Elevate to Admin View</span>
+              </DialogTitle>
+              <DialogDescription className="text-gray-400 text-xs">
+                Enter the 6-digit Admin PIN to unlock the full Fleet Overview and inspect all registered devices.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleUnlockSubmit} className="space-y-4 py-2">
+              <Input
+                type="password"
+                placeholder="Enter 6-digit PIN..."
+                value={adminPin}
+                maxLength={6}
+                onChange={(e) => setAdminPin(e.target.value)}
+                autoFocus
+                className="bg-gray-800 border-gray-700 text-white font-mono text-center tracking-widest text-lg h-12"
+              />
+
+              {adminError && (
+                <p className="text-red-400 text-xs font-mono text-center">⚠ {adminError}</p>
+              )}
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowAdminModal(false)}
+                  className="font-mono text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={adminPin.length < 6 || isVerifyingPin}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-xs"
+                >
+                  {isVerifyingPin ? 'Verifying...' : 'Unlock Admin View'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Admin Mode: Full Fleet Overview & Device Switcher
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className || ''}`}>
+      <Badge variant="outline" className="font-mono text-[10px] px-2 py-0.5 border-blue-500/40 bg-blue-500/10 text-blue-300">
+        ADMIN
+      </Badge>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -80,7 +195,7 @@ export function DeviceSelector({ className }: { className?: string }) {
 
         <DropdownMenuContent align="start" className="w-72 sm:w-80 p-2 font-mono text-xs bg-popover/95 backdrop-blur-md border-border">
           <DropdownMenuLabel className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-2 py-1.5 flex items-center justify-between">
-            <span>Device Scope</span>
+            <span>Admin Device Scope</span>
             {isLoadingDevices && <span className="text-[9px] lowercase text-primary animate-pulse">refreshing...</span>}
           </DropdownMenuLabel>
 
@@ -209,7 +324,7 @@ export function DeviceSelector({ className }: { className?: string }) {
           className="h-8 px-2 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:bg-secondary/50 gap-1"
         >
           <X size={12} />
-          <span className="hidden sm:inline">Reset to All</span>
+          <span className="hidden sm:inline">Reset to Fleet</span>
         </Button>
       )}
     </div>
@@ -220,7 +335,7 @@ export function DeviceSelector({ className }: { className?: string }) {
  * Banner shown on top of pages when a device filter is currently applied.
  */
 export function ActiveDeviceBanner() {
-  const { selectedDeviceId, selectedDevice, clearDeviceFilter, isFleetView } = useDevice();
+  const { selectedDeviceId, selectedDevice, clearDeviceFilter, isFleetView, isDeviceUser } = useDevice();
 
   if (isFleetView) return null;
 
@@ -233,30 +348,32 @@ export function ActiveDeviceBanner() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-cyan-300 text-sm">
-              {selectedDevice?.deviceName || 'Device Filter Active'}
+              {selectedDevice?.deviceName || 'Device Telemetry Active'}
             </span>
             <Badge variant="outline" className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
-              SINGLE DEVICE SCOPE
+              {isDeviceUser ? 'PROTECTED ENDPOINT' : 'SCOPED ADMIN VIEW'}
             </Badge>
           </div>
           <p className="text-muted-foreground text-[11px] mt-0.5">
-            Showing metrics and scan records exclusively for device ID:{' '}
+            Displaying scans and telemetry for device ID:{' '}
             <span className="text-cyan-200 select-all font-semibold">{selectedDeviceId}</span>
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={clearDeviceFilter}
-          className="text-xs font-mono h-8 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50 gap-1.5"
-        >
-          <Globe size={13} />
-          <span>Switch to Fleet View</span>
-        </Button>
-      </div>
+      {!isDeviceUser && (
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearDeviceFilter}
+            className="text-xs font-mono h-8 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50 gap-1.5"
+          >
+            <Globe size={13} />
+            <span>Switch to Fleet View</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
