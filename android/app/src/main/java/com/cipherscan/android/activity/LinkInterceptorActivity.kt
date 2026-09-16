@@ -236,7 +236,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
         try {
             BrowserLauncher.openUrl(this@LinkInterceptorActivity, destinationUrl)
         } catch (_: Exception) {
-            Toast.makeText(this@LinkInterceptorActivity, "Unable to open browser", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@LinkInterceptorActivity, "Unable to open destination link", Toast.LENGTH_SHORT).show()
         } finally {
             finish()
         }
@@ -246,7 +246,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
         try {
             BrowserLauncher.openUrl(this, url)
         } catch (_: Exception) {
-            Toast.makeText(this, "Unable to open browser", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Unable to open destination link", Toast.LENGTH_SHORT).show()
         } finally {
             finish()
         }

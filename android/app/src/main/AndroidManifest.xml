@@ -10,8 +10,9 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
-    <!-- Required on Android 11+ (API 30+) to query and launch external browsers -->
+    <!-- Required on Android 11+ (API 30+) to discover and launch external apps, UPI payment apps, and browsers -->
     <queries>
+        <!-- Standard web browsers & App Links -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
@@ -22,11 +23,18 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="http" />
         </intent>
+
+        <!-- UPI Payment Applications (PhonePe, Google Pay, Paytm, BHIM, Cred) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" android:host="pay" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
         </intent>
     </queries>
+
 
     <application
         android:allowBackup="false"

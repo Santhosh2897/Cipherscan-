@@ -5,6 +5,7 @@ import { analyzeSandbox, createFallbackPreviewDataUri, fetchCloudScreenshot } fr
 import { analyzeReputation } from "../lib/reputationService.js";
 import { assertUrlIsSafe, UnsafeUrlError } from "../lib/urlSafety.js";
 import { logger } from "../lib/logger.js";
+import { isGlobalWhitelistedDomain, getWhitelistMatch } from "../lib/domainWhitelist.js";
 import {
   getCachedScan,
   upsertUrlCache,
@@ -65,6 +66,68 @@ router.post("/analyze", async (req, res): Promise<void> => {
         return;
       }
       res.status(400).json({ error: "Invalid or malformed target URL" });
+      return;
+    }
+
+    // ── STEP 0: Global Safe Whitelist — instant 0ms pass, zero API calls ─────
+    // For universally trusted domains (Google, YouTube, Wikipedia, etc.), skip
+    // the entire scan pipeline. No DB write either — these are always safe.
+    if (!forceFresh && isGlobalWhitelistedDomain(targetUrl)) {
+      const matchedDomain = getWhitelistMatch(targetUrl);
+      logger.info({ targetUrl, matchedDomain }, "Global whitelist HIT — instant SAFE (0ms)");
+
+      // Silently record the scan for scan history, but mark it as whitelisted
+      const insertedRows = await db
+        .insert(scansTable)
+        .values({
+          originalUrl: targetUrl,
+          finalUrl: targetUrl,
+          isSafe: true,
+          riskScore: 0,
+          verdict: "safe",
+          threatCategory: null,
+          redirectChain: JSON.stringify([targetUrl]),
+          reasons: JSON.stringify([`Globally trusted domain (${matchedDomain ?? "whitelist"})`]),
+          previewImageUrl: null,
+          triggerType,
+          deviceId,
+          deviceName,
+          virusTotalScore: null,
+          googleSafeBrowsing: false,
+        })
+        .returning()
+        .catch(() => []);
+
+      const scanId = insertedRows[0]?.id ?? Date.now();
+      const createdAt = insertedRows[0]?.createdAt?.toISOString() ?? new Date().toISOString();
+
+      // Background: update domain pattern so future per-device checks are faster
+      upsertDomainPattern(targetUrl, deviceId, "safe").catch(() => {});
+
+      res.json({
+        id: scanId,
+        originalUrl: targetUrl,
+        finalUrl: targetUrl,
+        isSafe: true,
+        riskScore: 0,
+        verdict: "safe",
+        threatCategory: null,
+        redirectChain: [targetUrl],
+        reasons: [`Globally trusted domain (${matchedDomain ?? "whitelist"})`],
+        previewImageUrl: null,
+        triggerType,
+        deviceId,
+        deviceName,
+        virusTotalScore: null,
+        googleSafeBrowsing: false,
+        createdAt,
+        fromCache: false,
+        fromTrustedDomain: true,
+        fromGlobalWhitelist: true,
+        whitelistedDomain: matchedDomain,
+        domainScanCount: null,
+        communityTrustScore: null,
+      });
       return;
     }
 
