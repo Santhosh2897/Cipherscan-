@@ -206,13 +206,13 @@ router.post("/analyze", async (req, res): Promise<void> => {
       logger.info({ targetUrl }, "url_cache HIT — returning fast result");
       incrementCacheScanCount(targetUrl).catch(() => {});
 
-      // If cached image is missing or is an old dummy SVG placeholder, upgrade to live cloud screenshot
+      // Asynchronously upgrade preview image in background if cached image is placeholder SVG
       if (!isUpiUrl(targetUrl) && (!cached.previewImageUrl || cached.previewImageUrl.includes("data:image/svg+xml"))) {
-        const freshImage = await fetchCloudScreenshot(targetUrl).catch(() => null);
-        if (freshImage) {
-          cached.previewImageUrl = freshImage;
-          updateCachePreviewImage(targetUrl, freshImage).catch(() => {});
-        }
+        fetchCloudScreenshot(targetUrl)
+          .then((freshImage) => {
+            if (freshImage) updateCachePreviewImage(targetUrl, freshImage).catch(() => {});
+          })
+          .catch(() => {});
       }
 
       const domainPattern = await getDomainPatternForDevice(targetUrl, deviceId);
@@ -307,14 +307,17 @@ router.post("/analyze", async (req, res): Promise<void> => {
       fastFinalUrl,
       fastRedirectChain,
       { timeoutMs: 350 },
-    ).catch(() => ({
-      riskScore: 0,
-      verdict: "safe" as const,
-      threatCategory: null,
-      reasons: ["Initial heuristics verified safe"],
-      virusTotalScore: null,
-      googleSafeBrowsing: false,
-    }));
+    ).catch((reputationErr: any) => {
+      logger.error({ error: reputationErr?.message, stack: reputationErr?.stack }, "analyzeReputation threw an error in Tier 1");
+      return {
+        riskScore: 0,
+        verdict: "safe" as const,
+        threatCategory: null,
+        reasons: ["Initial heuristics verified safe"],
+        virusTotalScore: null,
+        googleSafeBrowsing: false,
+      };
+    });
 
     // Immediate preview: UPI card for payment links, or high-tech domain shield card for web links
     let previewImageUrl: string | null = null;

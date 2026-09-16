@@ -214,12 +214,13 @@ export async function analyzeReputation(
   const gsbApiKey = process.env["GOOGLE_SAFE_BROWSING_API_KEY"] ?? "";
   const timeoutMs = options.timeoutMs ?? 4000;
 
+  const isUpi = originalUrl.toLowerCase().startsWith("upi://");
   const allReasons: string[] = [];
 
-  // Run VT and GSB in parallel (with timeout)
+  // Run VT and GSB in parallel (with timeout) — skip for UPI schemes as they are mobile intents
   const [vtResult, gsbResult] = await Promise.allSettled([
-    vtApiKey ? checkVirusTotal(finalUrl, vtApiKey, timeoutMs) : Promise.resolve({ score: 0, reasons: [] }),
-    gsbApiKey ? checkGoogleSafeBrowsing(finalUrl, gsbApiKey, timeoutMs) : Promise.resolve({ flagged: false, reasons: [] }),
+    !isUpi && vtApiKey ? checkVirusTotal(finalUrl, vtApiKey, timeoutMs) : Promise.resolve({ score: 0, reasons: [] }),
+    !isUpi && gsbApiKey ? checkGoogleSafeBrowsing(finalUrl, gsbApiKey, timeoutMs) : Promise.resolve({ flagged: false, reasons: [] }),
   ]);
 
   const vt = vtResult.status === "fulfilled" ? vtResult.value : { score: 0, reasons: [] };

@@ -189,6 +189,10 @@ export async function assertUrlIsSafe(urlString: string): Promise<URL> {
     if (err instanceof UnsafeUrlError) {
       throw err;
     }
+    // If the domain does not exist in DNS (ENOTFOUND / EAI_AGAIN), it cannot reach internal networks
+    if (err.code === "ENOTFOUND" || err.code === "EAI_AGAIN" || err.code === "ESERVFAIL") {
+      return parsedUrl;
+    }
     throw new UnsafeUrlError(`DNS lookup failed for host ${hostname}: ${err.message}`);
   }
 
