@@ -6,6 +6,7 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
 import Login, { isAuthenticated, getStoredToken } from '@/pages/Login';
+import { DeviceProvider } from '@/context/DeviceContext';
 
 // Pages
 import Dashboard from '@/pages/Dashboard';
@@ -92,9 +93,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthGuard>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <Router />
-          </WouterRouter>
+          <DeviceProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <Router />
+            </WouterRouter>
+          </DeviceProvider>
         </AuthGuard>
         <Toaster />
       </TooltipProvider>

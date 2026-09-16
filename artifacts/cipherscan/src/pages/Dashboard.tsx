@@ -18,14 +18,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { VerdictBadge } from '@/components/VerdictBadge';
 import { Link } from 'wouter';
+import { useDevice } from '@/context/DeviceContext';
+import { DeviceSelector, ActiveDeviceBanner } from '@/components/DeviceSelector';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
-  const { data: timeline, isLoading: timelineLoading } = useGetScanTimeline();
-  const { data: threats, isLoading: threatsLoading } = useGetThreatBreakdown();
-  const { data: recentScans, isLoading: recentLoading } = useListScans({ limit: 5 });
+  const { selectedDeviceId, isFleetView, selectedDevice, clearDeviceFilter } = useDevice();
+
+  const queryParam = selectedDeviceId ? { deviceId: selectedDeviceId } : undefined;
+  const { data: stats, isLoading: statsLoading } = useGetDashboardStats(queryParam);
+  const { data: timeline, isLoading: timelineLoading } = useGetScanTimeline(queryParam);
+  const { data: threats, isLoading: threatsLoading } = useGetThreatBreakdown(queryParam);
+  const { data: recentScans, isLoading: recentLoading } = useListScans({ 
+    limit: 5, 
+    deviceId: selectedDeviceId || undefined 
+  });
   const { data: communityStats } = useGetCommunityStats();
   const { data: trending } = useGetTrendingThreats();
   const clearScansMutation = useClearScans();
@@ -37,8 +45,12 @@ export default function Dashboard() {
   };
 
   const handleResetData = () => {
-    if (window.confirm("Are you sure you want to delete all scan records and reset the telemetry graph and threat taxonomy to zero level?")) {
-      clearScansMutation.mutate(undefined, {
+    const targetLabel = isFleetView 
+      ? "all scan records across all devices" 
+      : `scan records for device "${selectedDevice?.deviceName || selectedDeviceId}"`;
+
+    if (window.confirm(`Are you sure you want to delete ${targetLabel} and reset telemetry to zero?`)) {
+      clearScansMutation.mutate(selectedDeviceId || 'all', {
         onSuccess: () => {
           queryClient.invalidateQueries();
         }
@@ -83,16 +95,27 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
             <Crosshair className="text-primary shrink-0" size={24} />
             <span>COMMAND CENTER</span>
+            {!isFleetView && (
+              <Badge variant="outline" className="text-xs font-mono bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
+                {selectedDevice?.deviceName || 'DEVICE VIEW'}
+              </Badge>
+            )}
           </h1>
-          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">Real-time threat intelligence & mobile ecosystem defense status.</p>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+            {isFleetView
+              ? 'Real-time threat intelligence & mobile ecosystem defense status.'
+              : `Scoped telemetry & scan records for device ${selectedDevice?.deviceName || selectedDeviceId}.`}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-2.5">
+          <DeviceSelector />
+
           <Button
             variant="outline"
             size="sm"
@@ -112,7 +135,7 @@ export default function Dashboard() {
             className="font-mono text-xs gap-1.5 bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-900/60"
           >
             <Trash2 size={14} />
-            RESET TELEMETRY
+            {isFleetView ? 'RESET TELEMETRY' : 'CLEAR DEVICE SCANS'}
           </Button>
 
           {/* Security Level Indicator Card */}
@@ -133,6 +156,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      <ActiveDeviceBanner />
 
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -273,7 +298,9 @@ export default function Dashboard() {
 
       <Card className="border-border/50 bg-card/50 backdrop-blur">
         <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 pb-4">
-          <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">Live Multi-Device Scan Feed</CardTitle>
+          <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">
+            {isFleetView ? "Live Multi-Device Scan Feed" : `Live Scan Feed — ${selectedDevice?.deviceName || selectedDeviceId}`}
+          </CardTitle>
           <Link href="/scans" className="text-xs font-mono text-primary hover:underline uppercase tracking-widest">
             View All
           </Link>

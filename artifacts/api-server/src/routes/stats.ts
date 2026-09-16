@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, scansTable } from "@workspace/db";
-import { sql, count, avg, gte, desc } from "drizzle-orm";
+import { sql, count, avg, gte, desc, eq, and } from "drizzle-orm";
 
 const router = Router();
 
@@ -9,30 +9,50 @@ router.get("/stats", async (req, res): Promise<void> => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const rawDeviceId = typeof req.query.deviceId === "string" ? req.query.deviceId.trim() : undefined;
+    const deviceId = rawDeviceId && rawDeviceId !== "" && rawDeviceId !== "all" ? rawDeviceId : undefined;
+    const deviceCondition = deviceId ? eq(scansTable.deviceId, deviceId) : undefined;
+
+    const totalsBase = db
+      .select({
+        totalScans: count(),
+        threatsBlocked: sql<number>`count(*) filter (where verdict = 'malicious')`,
+        safeLinks: sql<number>`count(*) filter (where verdict = 'safe')`,
+        suspiciousLinks: sql<number>`count(*) filter (where verdict = 'suspicious')`,
+        mobileScans: sql<number>`count(*) filter (where trigger_type in ('link', 'camera'))`,
+        webScans: sql<number>`count(*) filter (where trigger_type = 'manual' or trigger_type is null or trigger_type = '')`,
+        activeDevicesCount: sql<number>`count(distinct device_id) filter (where device_id is not null)`,
+        avgRiskScore: avg(scansTable.riskScore),
+      })
+      .from(scansTable);
+
+    const totalsQuery = deviceCondition ? totalsBase.where(deviceCondition) : totalsBase;
+
+    const todayConditions = [gte(scansTable.createdAt, today)];
+    if (deviceCondition) {
+      todayConditions.push(deviceCondition);
+    }
+    const todayQuery = db
+      .select({ count: count() })
+      .from(scansTable)
+      .where(todayConditions.length > 1 ? and(...todayConditions) : todayConditions[0]);
+
+    const threatConditions = [sql`threat_category is not null`];
+    if (deviceCondition) {
+      threatConditions.push(deviceCondition);
+    }
+    const topThreatQuery = db
+      .select({ threatCategory: scansTable.threatCategory, count: count() })
+      .from(scansTable)
+      .where(threatConditions.length > 1 ? and(...threatConditions) : threatConditions[0])
+      .groupBy(scansTable.threatCategory)
+      .orderBy(desc(count()))
+      .limit(1);
+
     const [totals, todayCount, topThreat] = await Promise.all([
-      db
-        .select({
-          totalScans: count(),
-          threatsBlocked: sql<number>`count(*) filter (where verdict = 'malicious')`,
-          safeLinks: sql<number>`count(*) filter (where verdict = 'safe')`,
-          suspiciousLinks: sql<number>`count(*) filter (where verdict = 'suspicious')`,
-          mobileScans: sql<number>`count(*) filter (where trigger_type in ('link', 'camera'))`,
-          webScans: sql<number>`count(*) filter (where trigger_type = 'manual' or trigger_type is null or trigger_type = '')`,
-          activeDevicesCount: sql<number>`count(distinct device_id) filter (where device_id is not null)`,
-          avgRiskScore: avg(scansTable.riskScore),
-        })
-        .from(scansTable),
-      db
-        .select({ count: count() })
-        .from(scansTable)
-        .where(gte(scansTable.createdAt, today)),
-      db
-        .select({ threatCategory: scansTable.threatCategory, count: count() })
-        .from(scansTable)
-        .where(sql`threat_category is not null`)
-        .groupBy(scansTable.threatCategory)
-        .orderBy(desc(count()))
-        .limit(1),
+      totalsQuery,
+      todayQuery,
+      topThreatQuery,
     ]);
 
     const row = totals[0];
@@ -74,13 +94,21 @@ router.get("/stats", async (req, res): Promise<void> => {
 
 router.get("/stats/threats", async (req, res): Promise<void> => {
   try {
+    const rawDeviceId = typeof req.query.deviceId === "string" ? req.query.deviceId.trim() : undefined;
+    const deviceId = rawDeviceId && rawDeviceId !== "" && rawDeviceId !== "all" ? rawDeviceId : undefined;
+
+    const conditions = [sql`threat_category is not null`];
+    if (deviceId) {
+      conditions.push(eq(scansTable.deviceId, deviceId));
+    }
+
     const rows = await db
       .select({
         category: scansTable.threatCategory,
         count: count(),
       })
       .from(scansTable)
-      .where(sql`threat_category is not null`)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0])
       .groupBy(scansTable.threatCategory)
       .orderBy(desc(count()))
       .limit(10);
@@ -98,13 +126,18 @@ router.get("/stats/threats", async (req, res): Promise<void> => {
 
 router.get("/stats/timeline", async (req, res): Promise<void> => {
   try {
+    const rawDeviceId = typeof req.query.deviceId === "string" ? req.query.deviceId.trim() : undefined;
+    const deviceId = rawDeviceId && rawDeviceId !== "" && rawDeviceId !== "all" ? rawDeviceId : undefined;
+
+    const deviceFilter = deviceId ? sql` AND device_id = ${deviceId}` : sql``;
+
     const result = await db.execute(sql`
       SELECT
         TO_CHAR(created_at, 'YYYY-MM-DD') as date,
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE verdict != 'safe') as threats
       FROM scans
-      WHERE created_at >= NOW() - INTERVAL '7 days'
+      WHERE created_at >= NOW() - INTERVAL '7 days' ${deviceFilter}
       GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
       ORDER BY date ASC
     `);

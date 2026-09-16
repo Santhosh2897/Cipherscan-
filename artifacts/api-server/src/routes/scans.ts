@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, scansTable } from "@workspace/db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql, count } from "drizzle-orm";
 
 const router = Router();
 
@@ -81,6 +81,33 @@ router.get("/scans", async (req, res) => {
     return res.json({ items: results.map(formatScanRecord) });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/devices", async (req, res) => {
+  try {
+    const rows = await db
+      .select({
+        deviceId: scansTable.deviceId,
+        deviceName: sql<string | null>`MAX(${scansTable.deviceName})`,
+        lastScanAt: sql<any>`MAX(${scansTable.createdAt})`,
+        totalScans: count(),
+      })
+      .from(scansTable)
+      .where(sql`${scansTable.deviceId} IS NOT NULL AND ${scansTable.deviceId} != ''`)
+      .groupBy(scansTable.deviceId)
+      .orderBy(desc(sql`MAX(${scansTable.createdAt})`));
+
+    return res.json({
+      items: rows.map((r) => ({
+        deviceId: r.deviceId,
+        deviceName: r.deviceName || r.deviceId,
+        lastScanAt: r.lastScanAt instanceof Date ? r.lastScanAt.toISOString() : String(r.lastScanAt || ''),
+        totalScans: Number(r.totalScans || 0),
+      })),
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message, items: [] });
   }
 });
 

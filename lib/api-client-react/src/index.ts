@@ -25,33 +25,55 @@ export type {
 } from "./generated/api.schemas";
 export { ApiError } from "./generated/api.client";
 
+export interface DeviceInfo {
+  deviceId: string;
+  deviceName: string;
+  lastScanAt: string;
+  totalScans: number;
+}
+
+export interface ListDevicesResponse {
+  items: DeviceInfo[];
+}
+
+/**
+ * GET /api/devices
+ */
+export function useListDevices(): UseQueryResult<ListDevicesResponse> {
+  return useQuery({
+    queryKey: ["devices"],
+    queryFn: () => apiGet<ListDevicesResponse>("/api/devices"),
+    staleTime: 15_000,
+  });
+}
+
 /**
  * GET /api/stats
  */
-export function useGetDashboardStats(): UseQueryResult<DashboardStats> {
+export function useGetDashboardStats(params?: { deviceId?: string }): UseQueryResult<DashboardStats> {
   return useQuery({
-    queryKey: ["stats"],
-    queryFn: () => apiGet<DashboardStats>("/api/stats"),
+    queryKey: ["stats", params?.deviceId],
+    queryFn: () => apiGet<DashboardStats>("/api/stats", params?.deviceId ? { deviceId: params.deviceId } : undefined),
   });
 }
 
 /**
  * GET /api/stats/timeline
  */
-export function useGetScanTimeline(): UseQueryResult<ScanTimelineEntry[]> {
+export function useGetScanTimeline(params?: { deviceId?: string }): UseQueryResult<ScanTimelineEntry[]> {
   return useQuery({
-    queryKey: ["stats", "timeline"],
-    queryFn: () => apiGet<ScanTimelineEntry[]>("/api/stats/timeline"),
+    queryKey: ["stats", "timeline", params?.deviceId],
+    queryFn: () => apiGet<ScanTimelineEntry[]>("/api/stats/timeline", params?.deviceId ? { deviceId: params.deviceId } : undefined),
   });
 }
 
 /**
  * GET /api/stats/threats
  */
-export function useGetThreatBreakdown(): UseQueryResult<ThreatBreakdownEntry[]> {
+export function useGetThreatBreakdown(params?: { deviceId?: string }): UseQueryResult<ThreatBreakdownEntry[]> {
   return useQuery({
-    queryKey: ["stats", "threats"],
-    queryFn: () => apiGet<ThreatBreakdownEntry[]>("/api/stats/threats"),
+    queryKey: ["stats", "threats", params?.deviceId],
+    queryFn: () => apiGet<ThreatBreakdownEntry[]>("/api/stats/threats", params?.deviceId ? { deviceId: params.deviceId } : undefined),
   });
 }
 

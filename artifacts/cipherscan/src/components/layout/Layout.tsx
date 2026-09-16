@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Link, useLocation } from 'wouter';
-import { Menu, Shield, LayoutDashboard, Search, History, Activity } from 'lucide-react';
+import { Menu, Shield, LayoutDashboard, Search, History, Activity, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDevice } from '@/context/DeviceContext';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+  const { selectedDevice, isFleetView } = useDevice();
 
   const mobileNavItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,11 +27,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <span className="font-bold tracking-wider font-mono text-base text-foreground">CIPHERSCAN</span>
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono">
-            <Activity size={12} className="animate-pulse" />
-            <span>ACTIVE</span>
-          </div>
+        <div className="flex items-center gap-2.5">
+          {!isFleetView ? (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono truncate max-w-[120px]">
+              <Smartphone size={11} className="text-cyan-400 shrink-0" />
+              <span className="truncate">{selectedDevice?.deviceName || 'Device'}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono">
+              <Activity size={12} className="animate-pulse" />
+              <span>ACTIVE</span>
+            </div>
+          )}
 
           <button
             onClick={() => setIsMobileMenuOpen(true)}
