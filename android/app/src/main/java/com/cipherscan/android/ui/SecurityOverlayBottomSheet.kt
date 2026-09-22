@@ -294,7 +294,7 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
             val destination = result.finalUrl ?: result.originalUrl ?: "https://google.com"
             val act = activity
             if (act != null && !act.isFinishing) {
-                BrowserLauncher.openUrl(act, destination)
+                BrowserLauncher.openUrl(act, destination, scanId = result.numericId)
             }
             try {
                 dismissAllowingStateLoss()

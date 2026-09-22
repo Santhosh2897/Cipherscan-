@@ -172,7 +172,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
         if (isSafe && destinationUrl.isNotBlank()) {
             // For SAFE links: show Verified Safe with green symbol and auto-proceed without popup
-            showVerifiedAndProceed(destinationUrl)
+            showVerifiedAndProceed(destinationUrl, scanResult)
         } else {
             // For SUSPICIOUS or MALICIOUS links: show the security bottom sheet warning popup
             progressBar?.visibility = View.GONE
@@ -182,7 +182,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
         }
     }
 
-    private fun showVerifiedAndProceed(destinationUrl: String) {
+    private fun showVerifiedAndProceed(destinationUrl: String, scanResult: ScanResult? = null) {
         if (isProceeding) return
         isProceeding = true
 
@@ -219,22 +219,22 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
         // Instant proceed on user tap
         cardContainer?.setOnClickListener {
-            proceedNow(destinationUrl)
+            proceedNow(destinationUrl, scanResult)
         }
         findViewById<View>(R.id.rootLayout)?.setOnClickListener {
-            proceedNow(destinationUrl)
+            proceedNow(destinationUrl, scanResult)
         }
 
         lifecycleScope.launch {
             delay(650)
-            proceedNow(destinationUrl)
+            proceedNow(destinationUrl, scanResult)
         }
     }
 
-    private fun proceedNow(destinationUrl: String) {
+    private fun proceedNow(destinationUrl: String, scanResult: ScanResult? = null) {
         if (isFinishing || isDestroyed) return
         try {
-            BrowserLauncher.openUrl(this@LinkInterceptorActivity, destinationUrl)
+            BrowserLauncher.openUrl(this@LinkInterceptorActivity, destinationUrl, scanId = scanResult?.numericId)
         } catch (_: Exception) {
             Toast.makeText(this@LinkInterceptorActivity, "Unable to open destination link", Toast.LENGTH_SHORT).show()
         } finally {

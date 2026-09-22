@@ -86,7 +86,10 @@ data class ScanResult(
     /** community trust score 0–100, or null if URL is new to the community */
     @SerializedName("communityTrustScore")
     val communityTrustScore: Int? = null,
-) : Serializable
+) : Serializable {
+    val numericId: Long?
+        get() = (id as? Number)?.toLong() ?: (id as? String)?.toLongOrNull()
+}
 
 data class ReportThreatRequest(
     @SerializedName("url")
@@ -105,4 +108,47 @@ data class ReportThreatResponse(
 
     @SerializedName("message")
     val message: String = ""
+) : Serializable
+
+data class RetroactiveAlertResponse(
+    @SerializedName("elevated")
+    val elevated: Boolean = false,
+
+    @SerializedName("scanId")
+    val scanId: Long? = null,
+
+    @SerializedName("originalUrl")
+    val originalUrl: String? = null,
+
+    @SerializedName("finalUrl")
+    val finalUrl: String? = null,
+
+    @SerializedName("isSafe")
+    val isSafe: Boolean = true,
+
+    @SerializedName("verdict")
+    val verdict: String? = null,
+
+    @SerializedName("threatCategory")
+    val threatCategory: String? = null,
+
+    @SerializedName("riskScore")
+    val riskScore: Int? = null,
+
+    @SerializedName("reasons")
+    val reasons: List<String>? = null,
+
+    @SerializedName("previewImageUrl")
+    val previewImageUrl: String? = null,
+
+    @SerializedName("createdAt")
+    val createdAt: String? = null
+) : Serializable
+
+data class AlertAcknowledgeRequest(
+    @SerializedName("scanId")
+    val scanId: Long? = null,
+
+    @SerializedName("deviceId")
+    val deviceId: String? = null
 ) : Serializable

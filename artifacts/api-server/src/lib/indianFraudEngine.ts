@@ -40,37 +40,37 @@ export const INDIAN_ENTITIES: IndianEntity[] = [
   {
     name: "State Bank of India (SBI)",
     category: "bank",
-    officialDomains: ["sbi.co.in", "onlinesbi.sbi", "onlinesbi.com", "sbi.bank"],
+    officialDomains: ["sbi.co.in", "onlinesbi.sbi", "onlinesbi.com", "sbi.bank", "statebankofindia.com"],
     keywords: ["sbi", "onlinesbi", "statebank", "sbiyono", "yono"],
   },
   {
     name: "HDFC Bank",
     category: "bank",
-    officialDomains: ["hdfcbank.com", "hdfc.com"],
+    officialDomains: ["hdfcbank.com", "hdfc.com", "hdfcbank.co.in"],
     keywords: ["hdfc", "hdfcbank", "hdfcnetbanking"],
   },
   {
     name: "ICICI Bank",
     category: "bank",
-    officialDomains: ["icicibank.com", "icici.com"],
+    officialDomains: ["icicibank.com", "icici.com", "icicibank.co.in"],
     keywords: ["icici", "icicibank", "imobile"],
   },
   {
     name: "Axis Bank",
     category: "bank",
-    officialDomains: ["axisbank.com"],
+    officialDomains: ["axisbank.com", "axisbank.co.in", "axis.bank"],
     keywords: ["axisbank", "axisnetbanking"],
   },
   {
     name: "Punjab National Bank (PNB)",
     category: "bank",
-    officialDomains: ["pnbindia.in", "netpnb.com"],
+    officialDomains: ["pnbindia.in", "netpnb.com", "pnb.bank"],
     keywords: ["pnb", "pnbindia", "netpnb"],
   },
   {
     name: "Kotak Mahindra Bank",
     category: "bank",
-    officialDomains: ["kotak.com", "kotak811.com"],
+    officialDomains: ["kotak.com", "kotak811.com", "kotakbank.com"],
     keywords: ["kotak", "kotak811", "kotakbank"],
   },
   {

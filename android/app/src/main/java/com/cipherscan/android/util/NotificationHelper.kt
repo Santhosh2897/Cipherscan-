@@ -70,4 +70,97 @@ object NotificationHelper {
             // Notifications permission not granted on Android 13+
         }
     }
+
+    fun showRetroactiveEmergencyAlert(
+        context: Context,
+        domain: String,
+        threatCategory: String?,
+        url: String
+    ) {
+        createNotificationChannel(context)
+
+        val intent = Intent(context, LinkInterceptorActivity::class.java).apply {
+            data = Uri.parse(url)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("triggerType", "retroactive")
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            url.hashCode() + 100,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val categoryText = if (!threatCategory.isNullOrBlank()) " [$threatCategory]" else ""
+        val contentText = "Stealth threat detected on $domain$categoryText. Close page immediately!"
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("🚨 EMERGENCY: Malicious Site Detected")
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                "Deep analysis discovered active malicious behavior on $domain$categoryText.\n" +
+                "Target: $url\n" +
+                "Tap to view security breakdown and protect your device."
+            ))
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+
+        try {
+            val notificationManager = NotificationManagerCompat.from(context)
+            notificationManager.notify(url.hashCode() + 100, builder.build())
+        } catch (e: SecurityException) {
+            // Notifications permission not granted on Android 13+
+        }
+    }
+
+    fun showClipboardThreatAlert(
+        context: Context,
+        url: String,
+        threatCategory: String?,
+        riskScore: Int
+    ) {
+        createNotificationChannel(context)
+
+        val intent = Intent(context, LinkInterceptorActivity::class.java).apply {
+            data = Uri.parse(url)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("triggerType", "clipboard")
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            url.hashCode() + 200,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val categoryText = if (!threatCategory.isNullOrBlank()) " ($threatCategory)" else ""
+        val contentText = "Copied link flagged as suspicious$categoryText. Risk score: $riskScore/100. Tap to inspect before opening."
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("📋 Warning: Dangerous Link in Clipboard")
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                "Link copied to clipboard:\n$url$categoryText\n" +
+                "Risk Score: $riskScore/100\n" +
+                "Tap here to review the safety analysis before visiting."
+            ))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+
+        try {
+            val notificationManager = NotificationManagerCompat.from(context)
+            notificationManager.notify(url.hashCode() + 200, builder.build())
+        } catch (e: SecurityException) {
+            // Notifications permission not granted on Android 13+
+        }
+    }
 }

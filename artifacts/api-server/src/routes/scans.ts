@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, scansTable } from "@workspace/db";
 import { and, desc, eq, sql, count } from "drizzle-orm";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
@@ -80,7 +81,8 @@ router.get("/scans", async (req, res) => {
 
     return res.json({ items: results.map(formatScanRecord) });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    logger.warn({ error: error.message }, "Database query failed in GET /api/scans — returning fallback");
+    return res.json({ items: [] });
   }
 });
 

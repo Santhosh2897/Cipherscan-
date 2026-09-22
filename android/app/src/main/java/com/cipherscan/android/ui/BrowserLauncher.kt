@@ -7,6 +7,15 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import com.cipherscan.android.api.RetrofitClient
+import com.cipherscan.android.model.AlertAcknowledgeRequest
+import com.cipherscan.android.util.DeviceUtils
+import com.cipherscan.android.util.NotificationHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * BrowserLauncher — Universal Intent Dispatcher & Safe App Router.
@@ -44,8 +53,9 @@ object BrowserLauncher {
 
     /**
      * Primary entrypoint: Safely dispatches any destination URL or payment intent.
+     * Optionally takes scanId to schedule retroactive checks against Tier 2 deep analysis.
      */
-    fun openUrl(context: Context, rawUrl: String) {
+    fun openUrl(context: Context, rawUrl: String, scanId: Long? = null) {
         val trimmed = rawUrl.trim()
         if (trimmed.isBlank()) {
             Toast.makeText(context, "Cannot open empty destination", Toast.LENGTH_SHORT).show()
@@ -92,6 +102,13 @@ object BrowserLauncher {
 
         // ── LANE 4: General Web Browsers (Respects Default Browser) ────────────
         launchInWebBrowser(context, uri)
+
+        // ── RETROACTIVE THREAT MONITORING ──────────────────────────────────────
+        // If scanId was provided, schedule delayed checks against Tier 2 Playwright
+        // deep sandbox to catch zero-day stealth threats elevating after user entered
+        if (scanId != null) {
+            scheduleRetroactiveThreatCheck(context.applicationContext, scanId, destination)
+        }
     }
 
     /**
@@ -316,6 +333,60 @@ object BrowserLauncher {
                 lower.contains("chrome") ||
                 lower.contains("firefox") ||
                 lower.contains("opera")
+    }
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private fun scheduleRetroactiveThreatCheck(context: Context, scanId: Long, destinationUrl: String) {
+        val devId = DeviceUtils.getDeviceId(context)
+        scope.launch {
+            try {
+                // Check 1: 6 seconds after opening (Tier 2 background Playwright analysis usually finishes in 4-7s)
+                delay(6000)
+                if (checkAndAlertRetroactive(context, scanId, devId, destinationUrl)) return@launch
+
+                // Check 2: 13 seconds after opening (for slower sites / deep multi-redirect chains)
+                delay(7000)
+                checkAndAlertRetroactive(context, scanId, devId, destinationUrl)
+            } catch (e: Exception) {
+                Log.w(TAG, "Retroactive threat monitor error: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun checkAndAlertRetroactive(
+        context: Context,
+        scanId: Long,
+        deviceId: String,
+        url: String
+    ): Boolean {
+        return try {
+            val response = RetrofitClient.instance.checkRetroactiveAlert(scanId = scanId, deviceId = deviceId)
+            if (response.isSuccessful && response.body() != null) {
+                val alert = response.body()!!
+                if (alert.elevated || alert.verdict == "malicious" || (!alert.isSafe && (alert.riskScore ?: 0) >= 70)) {
+                    val domain = try {
+                        Uri.parse(url).host ?: url
+                    } catch (_: Exception) {
+                        url
+                    }
+                    NotificationHelper.showRetroactiveEmergencyAlert(
+                        context = context,
+                        domain = domain,
+                        threatCategory = alert.threatCategory ?: "Stealth Phishing",
+                        url = alert.finalUrl ?: alert.originalUrl ?: url
+                    )
+                    try {
+                        RetrofitClient.instance.acknowledgeAlert(AlertAcknowledgeRequest(scanId = scanId, deviceId = deviceId))
+                    } catch (_: Exception) {}
+                    return true
+                }
+            }
+            false
+        } catch (e: Exception) {
+            Log.d(TAG, "Check retroactive alert error: ${e.message}")
+            false
+        }
     }
 }
 

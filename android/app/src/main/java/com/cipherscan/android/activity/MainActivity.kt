@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import com.cipherscan.android.R
 import com.cipherscan.android.api.RetrofitClient
 import com.cipherscan.android.ui.BrowserLauncher
+import com.cipherscan.android.util.ClipboardMonitor
 import com.cipherscan.android.util.DeviceUtils
 import com.cipherscan.android.util.NotificationHelper
 
@@ -41,6 +42,9 @@ class MainActivity : AppCompatActivity() {
 
         // Ensure notification channel is initialized for threat alerts
         NotificationHelper.createNotificationChannel(this)
+
+        // Start background clipboard URL protection monitor
+        ClipboardMonitor.start(this)
 
         val cardWebDashboard = findViewById<CardView>(R.id.cardOpenWebDashboard)
         val btnLaunchDashboard = findViewById<Button>(R.id.btnLaunchDashboard)
@@ -105,6 +109,21 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateSmsProtectionUi()
+
+        // Auto-check clipboard on return: inspects links copied from WhatsApp, Telegram, etc.
+        val etTargetUrl = findViewById<EditText>(R.id.etTargetUrl)
+        ClipboardMonitor.checkClipboardNow(this) { foundUrl ->
+            runOnUiThread {
+                if (etTargetUrl?.text.isNullOrBlank()) {
+                    etTargetUrl?.setText(foundUrl)
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ClipboardMonitor.stop(this)
     }
 
     private fun hasSmsPermission(): Boolean {

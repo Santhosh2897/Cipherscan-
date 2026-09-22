@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CipherScan - Hackathon Project Idea Submission</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  @page {
+    size: A4;
+    margin: 14mm 14mm 14mm 14mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.5;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #6366f1;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+  }
+
+  .logo-title h1 {
+    margin: 0;
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-title h1 span {
+    color: #4f46e5;
+  }
+
+  .logo-title .tagline {
+    font-size: 10.5pt;
+    color: #64748b;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .meta-badge {
+    text-align: right;
+  }
+
+  .badge-category {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #c7d2fe;
+    margin-bottom: 4px;
+  }
+
+  .badge-sub {
+    font-size: 8.5pt;
+    color: #64748b;
+  }
+
+  /* Grid Layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .card.highlight {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+  }
+
+  .card.highlight .card-title {
+    color: #4338ca;
+    border-color: #ddd6fe;
+  }
+
+  .card p {
+    margin: 0 0 8px 0;
+    color: #334155;
+    font-size: 9.5pt;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin-bottom: 5px;
+    font-size: 9.2pt;
+    color: #334155;
+  }
+
+  li strong {
+    color: #0f172a;
+  }
+
+  /* Workflow bar */
+  .workflow-container {
+    background: #ffffff;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+
+  .workflow-title {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .workflow-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .step {
+    flex: 1;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+  }
+
+  .step-num {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    background: #4f46e5;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 8pt;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .step-title {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .step-desc {
+    font-size: 7.8pt;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  /* Key Innovations / Features */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .feature-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+
+  .feature-item h4 {
+    margin: 0 0 4px 0;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .feature-item p {
+    margin: 0;
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  /* Impact & Tech Specs Footer */
+  .specs-bar {
+    display: flex;
+    justify-content: space-between;
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: 8px;
+    padding: 12px 18px;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .spec-group h5 {
+    margin: 0 0 2px 0;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+  }
+
+  .spec-group p {
+    margin: 0;
+    font-size: 9pt;
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 8pt;
+    color: #94a3b8;
+    margin-top: 10px;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-title">
+      <h1>Cipher<span>Scan</span></h1>
+      <div class="tagline">Real-Time Mobile Threat Defense & Phishing Interception Engine</div>
+    </div>
+    <div class="meta-badge">
+      <div class="badge-category">Hackathon Idea Proposal</div>
+      <div class="badge-sub">Domain: Cybersecurity & Mobile Safety</div>
+    </div>
+  </div>
+
+  <!-- PROBLEM vs SOLUTION -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">⚠️ The Problem</div>
+      <p>Mobile users are targeted through SMS (smishing), messaging apps (WhatsApp, Telegram), and QR codes (quishing). Mobile devices are extremely vulnerable due to:</p>
+      <ul>
+        <li><strong>Hidden Destinations:</strong> Mobile address bars truncate long, deceptive URLs.</li>
+        <li><strong>No Hover Previews:</strong> Tap-to-execute links expose users instantly without any preview.</li>
+        <li><strong>UPI Payment Fraud:</strong> Manipulated payment links (<code>upi://pay</code>) trick users into sending money under disguised merchant names.</li>
+        <li><strong>Zero-Day Redirects:</strong> Shortened and disposable links evade traditional static domain blacklists.</li>
+      </ul>
+    </div>
+
+    <div class="card highlight">
+      <div class="card-title">💡 The Solution: CipherScan</div>
+      <p>CipherScan functions as a <strong>"digital bomb-defusal squad"</strong> for links. It intercepts dangerous links before your browser or payment app touches them:</p>
+      <ul>
+        <li><strong>Zero-Exposure Interception:</strong> Catches web and UPI links at the Android OS intent level the exact moment they are tapped.</li>
+        <li><strong>Headless Cloud Sandbox:</strong> Safely executes the link in a remote cloud container to inspect redirects, scripts, and visual previews.</li>
+        <li><strong>Multi-Engine Intelligence:</strong> Cross-checks with 70+ threat feeds, Google Safe Browsing, and payment anomaly heuristics.</li>
+        <li><strong>Instant Shield Card:</strong> Displays a clear risk score (Safe / Suspicious / Dangerous) before allowing access.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- WORKFLOW PIPELINE -->
+  <div class="workflow-container">
+    <div class="workflow-title">⚡ How It Works (End-to-End Pipeline)</div>
+    <div class="workflow-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Tap / Scan</div>
+        <div class="step-desc">User clicks link in SMS, WhatsApp, or scans QR</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">OS Intercept</div>
+        <div class="step-desc">CipherScan halts launch before browser opens</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Cloud Detonation</div>
+        <div class="step-desc">Headless Chromium sandbox traces 301/302 redirects</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Multi-Threat Check</div>
+        <div class="step-desc">Scans 70+ Antivirus feeds & UPI payment parameters</div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-title">Safety Verdict</div>
+        <div class="step-desc">Visual snapshot & risk score shown; safe links launch</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CORE INNOVATIONS / USP -->
+  <div style="margin-bottom: 6px; font-weight: 700; font-size: 10pt; color: #0f172a; text-transform: uppercase;">
+    🚀 Unique Selling Propositions (USPs) & Key Features
+  </div>
+  <div class="features-grid">
+    <div class="feature-item">
+      <h4>🔒 Pre-Execution Defense</h4>
+      <p>Unlike browser extensions, CipherScan stops threats at the Android OS layer across any app (SMS, WhatsApp, Mail, QR).</p>
+    </div>
+    <div class="feature-item">
+      <h4>📸 Visual Screenshot Sandbox</h4>
+      <p>Captures live webpage screenshots in an isolated cloud sandbox so users see what the page looks like without visiting it.</p>
+    </div>
+    <div class="feature-item">
+      <h4>💳 UPI Fraud Protection</h4>
+      <p>Specially parses UPI deep-links (VPA address, merchant name, amount limits) to detect QR payment swapping scams.</p>
+    </div>
+    <div class="feature-item">
+      <h4>⚡ Sub-Second Smart Cache</h4>
+      <p>24-hour intelligent caching deduplicates previously scanned safe links for instant, zero-lag link opening.</p>
+    </div>
+    <div class="feature-item">
+      <h4>📊 Live Security Dashboard</h4>
+      <p>Web management portal for enterprise or individual telemetry, monitoring scan history and threat distributions.</p>
+    </div>
+    <div class="feature-item">
+      <h4>🛡️ Battery & Privacy Friendly</h4>
+      <p>No battery-draining continuous VPN background filters; processes only clicked links on-demand.</p>
+    </div>
+  </div>
+
+  <!-- TARGET AUDIENCE & IMPACT -->
+  <div class="grid-2" style="margin-bottom: 12px;">
+    <div class="card">
+      <div class="card-title">🎯 Target Audience & Use Cases</div>
+      <ul>
+        <li><strong>Everyday Smartphone Users:</strong> Protecting elderly and non-tech users from WhatsApp & SMS lottery/banking scams.</li>
+        <li><strong>UPI & Digital Payment Users:</strong> Preventing fraudulent merchant QR code scams at retail outlets.</li>
+        <li><strong>Enterprises & BYOD:</strong> Mobile threat monitoring for corporate mobile devices without intrusive device tracking.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 Viability & Prototype Status</div>
+      <ul>
+        <li><strong>Fully Functional Prototype:</strong> Native Android Kotlin client actively intercepting links.</li>
+        <li><strong>Cloud Sandbox Backend:</strong> Node.js + Playwright engine live and analyzing real-world URLs.</li>
+        <li><strong>Central Web Dashboard:</strong> Real-time device history and interactive threat inspector ready for live demo.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TECH STACK & METRICS -->
+  <div class="specs-bar">
+    <div class="spec-group">
+      <h5>Mobile Client</h5>
+      <p>Android (Kotlin) • Android Intent Filters</p>
+    </div>
+    <div class="spec-group">
+      <h5>Cloud Engine</h5>
+      <p>Node.js • Express • Playwright Chromium</p>
+    </div>
+    <div class="spec-group">
+      <h5>Security Feeds</h5>
+      <p>VirusTotal v3 • Google Safe Browsing</p>
+    </div>
+    <div class="spec-group">
+      <h5>Web Dashboard</h5>
+      <p>React • Vite • Tailwind • PostgreSQL</p>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    CipherScan Project Proposal • Ready for Live Demonstration & Evaluation
+  </div>
+
+</body>
+</html>
