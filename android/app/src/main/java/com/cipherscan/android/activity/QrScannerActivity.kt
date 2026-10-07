@@ -178,12 +178,12 @@ class QrScannerActivity : AppCompatActivity() {
     }
 
     private fun isValidUrl(text: String): Boolean {
-        val lower = text.lowercase()
+        val lower = text.trim().lowercase()
         return lower.startsWith("http://") || lower.startsWith("https://")
     }
 
     private fun isUpiString(text: String): Boolean {
-        return text.lowercase().startsWith("upi://")
+        return text.trim().lowercase().startsWith("upi://")
     }
 
     private fun handleQrResult(url: String) {

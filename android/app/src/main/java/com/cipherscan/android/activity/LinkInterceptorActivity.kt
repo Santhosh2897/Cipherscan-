@@ -238,7 +238,18 @@ class LinkInterceptorActivity : AppCompatActivity() {
         } catch (_: Exception) {
             Toast.makeText(this@LinkInterceptorActivity, "Unable to open destination link", Toast.LENGTH_SHORT).show()
         } finally {
-            finish()
+            if (destinationUrl.lowercase().startsWith("upi://")) {
+                // For UPI payments, delay finish() so the payment app's task has time
+                // to fully initialize before our activity is destroyed.
+                // Calling finish() immediately causes some payment apps (Paytm, BHIM)
+                // to detect a broken task chain and abort the transaction.
+                lifecycleScope.launch {
+                    delay(800)
+                    if (!isFinishing && !isDestroyed) finish()
+                }
+            } else {
+                finish()
+            }
         }
     }
 

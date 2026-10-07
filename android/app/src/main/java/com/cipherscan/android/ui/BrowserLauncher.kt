@@ -1,5 +1,6 @@
 package com.cipherscan.android.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -112,25 +113,118 @@ object BrowserLauncher {
     }
 
     /**
-     * Dedicated UPI payment launcher conforming to NPCI Intent Specifications:
+     * Dedicated UPI payment launcher conforming to NPCI Intent Specifications.
+     *
+     * KEY FIX — WHY NO createChooser():
+     * When Intent.createChooser() wraps the UPI intent, Android's ChooserActivity
+     * becomes the calling entity — NOT CipherScan. PhonePe, GPay, and Paytm all
+     * pass the caller's package identity to NPCI servers for transaction validation.
+     * If the caller is ChooserActivity (unknown/unsigned app), NPCI rejects the
+     * transaction AFTER PIN entry — causing the "error" the user sees.
+     *
+     * CORRECT approach: Query UPI apps ourselves → launch directly with setPackage()
+     * so the calling app identity stays as "com.cipherscan.android" throughout.
+     *
      * - Action: Intent.ACTION_VIEW
      * - Flags: FLAG_ACTIVITY_NEW_TASK only
-     * - NO CATEGORY_BROWSABLE (which triggers bank anti-CSRF fraud prevention)
-     * - NO FLAG_ACTIVITY_NEW_DOCUMENT (which crashes the NPCI MPIN keypad sandbox)
+     * - NO CATEGORY_BROWSABLE (triggers bank anti-CSRF fraud prevention)
+     * - NO FLAG_ACTIVITY_NEW_DOCUMENT (crashes the NPCI MPIN keypad sandbox)
      */
-    private fun launchUpiPayment(context: Context, upiUrl: String) {
+    fun launchUpiPayment(context: Context, upiUrl: String) {
         Log.d(TAG, "Dispatching clean NPCI UPI payment intent: $upiUrl")
         try {
-            val uri = Uri.parse(upiUrl)
-            val upiIntent = Intent(Intent.ACTION_VIEW, uri).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val uri = Uri.parse(upiUrl.trim())
+
+            // Probe to discover installed UPI payment apps (exclude CipherScan itself)
+            val probeIntent = Intent(Intent.ACTION_VIEW, uri)
+            val upiApps: List<android.content.pm.ResolveInfo> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.queryIntentActivities(
+                    probeIntent,
+                    PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong())
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.queryIntentActivities(probeIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            }.filter { it.activityInfo.packageName != context.packageName }
+
+            if (upiApps.isEmpty()) {
+                Log.w(TAG, "No UPI payment apps found on device")
+                Toast.makeText(context, "No UPI payment app (PhonePe, GPay, Paytm) found on device.", Toast.LENGTH_LONG).show()
+                return
             }
 
-            val chooser = Intent.createChooser(upiIntent, "Pay with UPI").apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            // Single UPI app → launch directly, no picker needed
+            if (upiApps.size == 1) {
+                val pkg = upiApps[0].activityInfo.packageName
+                Log.d(TAG, "Single UPI app found, launching directly: $pkg")
+                val directIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                    setPackage(pkg)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(directIntent)
+                return
             }
 
-            context.startActivity(chooser)
+            // Multiple UPI apps → show AlertDialog picker so CipherScan stays the caller.
+            // setPackage() on the chosen app preserves our package identity at NPCI level.
+            // AlertDialog requires an Activity context — if context is Application-level
+            // (e.g. called from ClipboardMonitor), fall back to launching the first UPI app.
+            val activity = context as? Activity
+            if (activity == null || activity.isFinishing || activity.isDestroyed) {
+                Log.w(TAG, "No Activity context available for UPI picker — launching first UPI app directly")
+                val fallbackPkg = upiApps[0].activityInfo.packageName
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply {
+                        setPackage(fallbackPkg)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Fallback UPI launch failed: ${ex.message}", ex)
+                    Toast.makeText(context, "No UPI payment app (PhonePe, GPay, Paytm) found on device.", Toast.LENGTH_LONG).show()
+                }
+                return
+            }
+
+            val pm = context.packageManager
+            val appNames = upiApps.map {
+                pm.getApplicationLabel(it.activityInfo.applicationInfo).toString()
+            }.toTypedArray()
+
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                try {
+                    android.app.AlertDialog.Builder(activity)
+                        .setTitle("Pay with UPI")
+                        .setItems(appNames) { _, which ->
+                            val chosenPkg = upiApps[which].activityInfo.packageName
+                            Log.d(TAG, "User selected UPI app: $chosenPkg")
+                            try {
+                                val chosenIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                    setPackage(chosenPkg)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(chosenIntent)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to open $chosenPkg: ${e.message}", e)
+                                Toast.makeText(context, "Could not open ${appNames[which]}. Try again.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                } catch (e: Exception) {
+                    // Fallback: dialog failed unexpectedly
+                    Log.w(TAG, "Picker dialog failed, falling back to first UPI app: ${e.message}")
+                    val fallbackPkg = upiApps[0].activityInfo.packageName
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply {
+                            setPackage(fallbackPkg)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        })
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "Fallback UPI launch failed: ${ex.message}", ex)
+                        Toast.makeText(context, "No UPI payment app (PhonePe, GPay, Paytm) found on device.", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch UPI intent: ${e.message}", e)
             Toast.makeText(context, "No UPI payment app (PhonePe, GPay, Paytm) found on device.", Toast.LENGTH_LONG).show()

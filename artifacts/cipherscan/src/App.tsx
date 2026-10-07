@@ -5,7 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
-import Login, { isAuthenticated, getStoredToken } from '@/pages/Login';
+import Login, { isAuthenticated, getStoredToken, clearAuth } from '@/pages/Login';
 import { DeviceProvider } from '@/context/DeviceContext';
 
 // Pages
@@ -26,6 +26,17 @@ if (typeof document !== 'undefined') {
  * touching them individually.
  */
 const _nativeFetch = window.fetch.bind(window);
+
+/**
+ * Auto-logout helper: clears stale session and reloads to show Login.
+ * Called whenever any API call returns 401 (expired token).
+ */
+function handleSessionExpired() {
+  clearAuth();
+  // Small delay so any in-flight state updates can settle before reload
+  setTimeout(() => window.location.reload(), 50);
+}
+
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   const isApiCall = url.startsWith('/api/') || url.startsWith('./api/');
@@ -42,7 +53,15 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       };
     }
   }
-  return _nativeFetch(input, init);
+
+  const response = await _nativeFetch(input, init);
+
+  // If any API call returns 401 (expired/invalid session token), force re-login
+  if (isApiCall && response.status === 401) {
+    handleSessionExpired();
+  }
+
+  return response;
 };
 
 const queryClient = new QueryClient({
@@ -51,6 +70,13 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchInterval: false,
       staleTime: 0,
+      retry: (failureCount, error: unknown) => {
+        // Do not retry on 401 — session is expired, re-login is needed
+        if (error && typeof error === 'object' && 'status' in error && (error as { status: number }).status === 401) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     },
   },
 });

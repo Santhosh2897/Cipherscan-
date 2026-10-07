@@ -27,10 +27,10 @@ export default function Dashboard() {
   const { selectedDeviceId, isFleetView, selectedDevice, clearDeviceFilter, isAdmin, isDeviceUser } = useDevice();
 
   const queryParam = selectedDeviceId ? { deviceId: selectedDeviceId } : undefined;
-  const { data: stats, isLoading: statsLoading } = useGetDashboardStats(queryParam);
-  const { data: timeline, isLoading: timelineLoading } = useGetScanTimeline(queryParam);
-  const { data: threats, isLoading: threatsLoading } = useGetThreatBreakdown(queryParam);
-  const { data: recentScans, isLoading: recentLoading } = useListScans({ 
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetDashboardStats(queryParam);
+  const { data: timeline, isLoading: timelineLoading, isError: timelineError } = useGetScanTimeline(queryParam);
+  const { data: threats, isLoading: threatsLoading, isError: threatsError } = useGetThreatBreakdown(queryParam);
+  const { data: recentScans, isLoading: recentLoading, isError: recentError } = useListScans({ 
     limit: 5, 
     deviceId: selectedDeviceId || undefined 
   });
@@ -64,6 +64,33 @@ export default function Dashboard() {
         <div className="flex flex-col items-center gap-4 text-primary">
           <Activity size={32} className="animate-pulse" />
           <span className="font-mono tracking-widest text-sm animate-pulse">GATHERING INTEL...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If ALL core queries failed (e.g. session expired mid-session), show a recovery screen
+  // The fetch interceptor in App.tsx will already trigger a page reload on 401,
+  // but this acts as an immediate visual fallback to prevent a blank page.
+  if (statsError && timelineError && threatsError && recentError) {
+    return (
+      <div className="flex-1 p-4 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-6 text-center max-w-sm">
+          <div className="p-4 rounded-full bg-red-950/40 border border-red-500/30">
+            <ShieldAlert size={36} className="text-red-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-mono font-bold text-foreground">Session Expired</h2>
+            <p className="text-sm text-muted-foreground font-mono mt-2">
+              Your security session has timed out. Please re-authenticate to continue.
+            </p>
+          </div>
+          <button
+            onClick={() => { sessionStorage.clear(); window.location.reload(); }}
+            className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-mono text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Re-authenticate →
+          </button>
         </div>
       </div>
     );

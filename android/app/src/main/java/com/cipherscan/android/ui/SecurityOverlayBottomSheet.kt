@@ -202,23 +202,31 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         // 5. Screenshot preview
         val previewUrl = result.previewImageUrl
         if (!previewUrl.isNullOrBlank()) {
-            ivScreenshot?.visibility = View.VISIBLE
             if (previewUrl.startsWith("data:image")) {
-                try {
-                    val cleanBase64 = if (previewUrl.contains(",")) {
-                        previewUrl.substringAfter(",")
-                    } else {
-                        previewUrl
-                    }
-                    val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-                    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                    if (bitmap != null) {
-                        ivScreenshot?.setImageBitmap(bitmap)
-                    } else {
+                // SVG data URIs (used for UPI payment card previews) cannot be decoded
+                // by Android's BitmapFactory — only raster formats (PNG/JPEG) are supported.
+                // For UPI links the containerUpiAlert section already shows payee details,
+                // so we simply hide the image view for SVG previews.
+                if (previewUrl.startsWith("data:image/svg+xml")) {
+                    ivScreenshot?.visibility = View.GONE
+                } else {
+                    ivScreenshot?.visibility = View.VISIBLE
+                    try {
+                        val cleanBase64 = if (previewUrl.contains(",")) {
+                            previewUrl.substringAfter(",")
+                        } else {
+                            previewUrl
+                        }
+                        val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+                        val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                        if (bitmap != null) {
+                            ivScreenshot?.setImageBitmap(bitmap)
+                        } else {
+                            ivScreenshot?.visibility = View.GONE
+                        }
+                    } catch (_: Exception) {
                         ivScreenshot?.visibility = View.GONE
                     }
-                } catch (_: Exception) {
-                    ivScreenshot?.visibility = View.GONE
                 }
             } else {
                 val baseUrl = if (com.cipherscan.android.BuildConfig.CIPHERSCAN_SERVER_URL.isNotBlank()) {
@@ -231,6 +239,7 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
                 } else {
                     "$baseUrl$previewUrl"
                 }
+                ivScreenshot?.visibility = View.VISIBLE
                 ivScreenshot?.load(fullUrl) {
                     crossfade(true)
                     listener(

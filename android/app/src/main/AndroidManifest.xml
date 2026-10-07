@@ -90,11 +90,14 @@
                 <data android:scheme="https" />
             </intent-filter>
 
-            <!-- UPI deep link interception (payment intents). -->
+            <!-- UPI deep link interception (payment intents).
+                 IMPORTANT: Only CATEGORY_DEFAULT here — NO CATEGORY_BROWSABLE.
+                 Adding BROWSABLE to a upi:// filter triggers HDFC/SBI bank anti-CSRF
+                 guards that classify the intent as web-originated (potentially spoofed)
+                 and reject the transaction or add extra friction at NPCI level. -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="upi" android:host="pay" />
             </intent-filter>
         </activity>
