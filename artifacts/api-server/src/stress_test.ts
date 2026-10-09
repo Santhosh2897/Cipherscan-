@@ -35,7 +35,7 @@ function recordPass(testName: string, details = "") {
   console.log(`  ${colors.green}✔ PASS${colors.reset} ${testName} ${details ? colors.gray + "(" + details + ")" + colors.reset : ""}`);
 }
 
-function recordFail(testName: string, err: any) {
+function recordFail(testName: string, err: any = new Error("Assertion failed")) {
   totalFailed++;
   failedTests.push(`${testName}: ${err?.message || err}`);
   console.log(`  ${colors.red}✖ FAIL${colors.reset} ${testName}`);
@@ -187,13 +187,13 @@ async function runHeuristicsBenchmarks() {
   for (const tc of upiTestCases) {
     const res = evaluateUpiFraud(tc.url);
     if (tc.shouldBeFraud) {
-      if (res.isFraud && res.riskScore >= tc.minScore) {
+      if (res.isFraud && tc.minScore != null && res.riskScore >= tc.minScore) {
         recordPass(`${tc.name} flagged (Risk: ${res.riskScore}, ${res.threatCategory})`);
       } else {
         recordFail(`${tc.name} detection failed`, new Error(`Score ${res.riskScore}, isFraud: ${res.isFraud}`));
       }
     } else {
-      if (!res.isFraud && res.riskScore <= tc.maxScore) {
+      if (!res.isFraud && tc.maxScore != null && res.riskScore <= tc.maxScore) {
         recordPass(`${tc.name} allowed benign (Risk: ${res.riskScore})`);
       } else {
         recordFail(`${tc.name} false alarm`, new Error(`Score ${res.riskScore}, reasons: ${res.reasons.join("; ")}`));

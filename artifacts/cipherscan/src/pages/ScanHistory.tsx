@@ -265,7 +265,7 @@ export default function ScanHistory() {
               ) : filteredItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground font-mono text-sm">
-                    {searchQuery || filterVerdict || filterDeviceId ? 'No matching scans found for filter.' : 'No scans recorded yet.'}
+                    {searchQuery || filterVerdict || selectedDeviceId ? 'No matching scans found for filter.' : 'No scans recorded yet.'}
                   </TableCell>
                 </TableRow>
               ) : (
