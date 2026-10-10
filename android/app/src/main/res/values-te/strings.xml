@@ -12,6 +12,7 @@
     <string name="redirect_chain_hide">రీడైరెక్ట్ గొలుసును దాచు ▲</string>
     <string name="screenshot_preview_desc">వెబ్‌సైట్ స్క్రీన్‌షాట్ ప్రివ్యూ</string>
     <string name="risk_score_format">ప్రమాద స్కోర్: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
     <string name="tagline_threat_intel">రియల్-టైమ్ ముప్పు ఇంటెలిజెన్స్</string>
     <string name="title_link_interception">క్రియాశీల లింక్ నిరోధం</string>
     <string name="desc_link_interception">మాల్వేర్, ఫిషింగ్ మరియు మోసాల నుండి వచ్చే HTTP/HTTPS లింక్‌లు మరియు UPI చెల్లింపులను రక్షిస్తుంది.</string>

@@ -12,6 +12,7 @@
     <string name="redirect_chain_hide">रीडायरेक्ट श्रृंखला छिपाएं ▲</string>
     <string name="screenshot_preview_desc">वेबसाइट स्क्रीनशॉट पूर्वावलोकन</string>
     <string name="risk_score_format">जोखिम स्कोर: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
     <string name="tagline_threat_intel">रीयल-टाइम थ्रेट इंटेलिजेंस</string>
     <string name="title_link_interception">सक्रिय लिंक अवरोधन</string>
     <string name="desc_link_interception">मैलवेयर, फ़िशिंग और धोखाधड़ी से आने वाले HTTP/HTTPS लिंक और UPI भुगतानों की सुरक्षा।</string>

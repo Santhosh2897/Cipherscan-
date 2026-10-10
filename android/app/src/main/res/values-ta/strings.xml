@@ -12,6 +12,7 @@
     <string name="redirect_chain_hide">திசைதிருப்பல் சங்கிலியை மறைக்கவும் ▲</string>
     <string name="screenshot_preview_desc">வலைத்தள முன்னோட்டம்</string>
     <string name="risk_score_format">ஆபத்து மதிப்பீடு: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
     <string name="tagline_threat_intel">நேரலை அச்சுறுத்தல் நுண்ணறிவு</string>
     <string name="title_link_interception">செயலில் உள்ள இணைப்பு இடைமறிப்பு</string>
     <string name="desc_link_interception">மால்வேர், ஃபிஷிங் மற்றும் மோசடிகளிலிருந்து வரும் HTTP/HTTPS இணைப்புகள் மற்றும் UPI கொடுப்பனவுகளைப் பாதுகாக்கிறது.</string>

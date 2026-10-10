@@ -12,6 +12,7 @@
     <string name="redirect_chain_hide">रिडायरेक्ट साखळी लपवा ▲</string>
     <string name="screenshot_preview_desc">वेबसाइट स्क्रीनशॉट पूर्वावलोकन</string>
     <string name="risk_score_format">धोका गुण: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
     <string name="tagline_threat_intel">रिअल-टाइम थ्रेट इंटेलिजन्स</string>
     <string name="title_link_interception">सक्रिय लिंक इंटरसेप्शन</string>
     <string name="desc_link_interception">मालवेअर, फिशिंग आणि फसवणुकीपासून येणाऱ्या HTTP/HTTPS लिंक्स आणि UPI पेमेंटचे संरक्षण.</string>
