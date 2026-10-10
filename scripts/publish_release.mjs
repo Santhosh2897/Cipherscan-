@@ -112,25 +112,40 @@ Download **\`cipherscan-debug.apk\`** below directly to your Android device, tap
     }
   }
 
-  // 3. Upload APK asset
+  // 3. Upload APK asset using curl.exe for robust large binary streaming
   const uploadUrl = `https://uploads.github.com/repos/${repo}/releases/${releaseId}/assets?name=cipherscan-debug.apk`;
-  console.log(`Uploading cipherscan-debug.apk to GitHub Releases...`);
+  console.log(`Uploading cipherscan-debug.apk to GitHub Releases via curl...`);
 
-  const uploadRes = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Accept": "application/vnd.github+json",
-      "Content-Type": "application/vnd.android.package-archive",
-      "User-Agent": "CipherScan-Release-Script",
-    },
-    body: apkBuffer,
-  });
-
-  const uploadData = await uploadRes.json();
-  if (!uploadRes.ok) {
-    console.error("Failed to upload APK asset:", uploadData);
-    process.exit(1);
+  let uploadData;
+  try {
+    const rawResult = execSync(
+      `curl.exe -f -s -S --retry 3 --retry-delay 3 -X POST ` +
+      `-H "Authorization: Bearer ${token}" ` +
+      `-H "Accept: application/vnd.github+json" ` +
+      `-H "Content-Type: application/vnd.android.package-archive" ` +
+      `-H "User-Agent: CipherScan-Release-Script" ` +
+      `--data-binary @"${apkPath}" ` +
+      `"${uploadUrl}"`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 }
+    );
+    uploadData = JSON.parse(rawResult);
+  } catch (curlErr) {
+    console.error("curl upload error, falling back to fetch...", curlErr.message);
+    const uploadRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/vnd.android.package-archive",
+        "User-Agent": "CipherScan-Release-Script",
+      },
+      body: apkBuffer,
+    });
+    uploadData = await uploadRes.json();
+    if (!uploadRes.ok) {
+      console.error("Failed to upload APK asset:", uploadData);
+      process.exit(1);
+    }
   }
 
   console.log(`\n🎉 SUCCESS! APK asset uploaded successfully!`);
