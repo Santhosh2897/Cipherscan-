@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatNumber } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Read stored device ID from localStorage (set by the Android app or dashboard)
 function getLocalDeviceId(): string | null {
@@ -14,6 +15,7 @@ function getLocalDeviceId(): string | null {
 
 export default function ThreatIntel() {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const deviceId = getLocalDeviceId();
 
@@ -45,10 +47,10 @@ export default function ThreatIntel() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5">
             <Shield className="text-cyan-400 shrink-0" size={24} />
-            <span>THREAT INTEL FEED</span>
+            <span>{t('threat_intel_title')}</span>
           </h1>
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-            Community-powered threat intelligence — privacy-preserving, crowd-sourced.
+            {t('threat_intel_subtitle')}
           </p>
         </div>
         <Button
@@ -59,7 +61,7 @@ export default function ThreatIntel() {
           className="font-mono text-xs gap-1.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-950/30"
         >
           <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
-          REFRESH
+          {t('refresh')}
         </Button>
       </div>
 

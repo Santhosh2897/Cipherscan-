@@ -290,7 +290,8 @@ class SecurityOverlayBottomSheet : BottomSheetDialogFragment() {
         btnDashboard?.setOnClickListener {
             val act = activity
             if (act != null) {
-                BrowserLauncher.openUrl(act, "https://cipherscan-dashboard.vercel.app/scans")
+                val devId = DeviceUtils.getDeviceId(act)
+                BrowserLauncher.openUrl(act, "https://cipherscan-dashboard.vercel.app/scans?deviceId=$devId")
             }
         }
 

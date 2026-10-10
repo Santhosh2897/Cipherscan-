@@ -146,11 +146,57 @@
                     android:textColor="#94A3B8"
                     android:textSize="12sp" />
 
+                <!-- Device ID Info & One-Tap Copy -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="#0A1120"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="6dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="DEVICE ID: "
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvDisplayDeviceId"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Loading..."
+                        android:textColor="#38BDF8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:singleLine="true"
+                        android:ellipsize="middle" />
+
+                    <Button
+                        android:id="@+id/btnCopyDeviceId"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="0dp"
+                        android:text="COPY 📋"
+                        android:textSize="10sp"
+                        android:textColor="#38BDF8"
+                        android:backgroundTint="#1E293B" />
+                </LinearLayout>
+
                 <Button
                     android:id="@+id/btnLaunchDashboard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="10dp"
                     android:backgroundTint="#0284C7"
                     android:text="Open Device Security Dashboard"
                     android:textColor="#FFFFFF" />

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CipherScan</string>
+    <string name="verifying_link">লিঙ্কের নিরাপত্তা পরীক্ষা করা হচ্ছে…</string>
+    <string name="verdict_safe">নিরাপদ</string>
+    <string name="verdict_suspicious">সন্দেহজনক</string>
+    <string name="verdict_malicious">বিপজ্জনক</string>
+    <string name="btn_abort">বাতিল করুন এবং ফিরে যান</string>
+    <string name="btn_proceed">তবুও এগিয়ে যান</string>
+    <string name="threat_reasons_heading">কেন এটি ফ্ল্যাগ করা হয়েছে</string>
+    <string name="redirect_chain_show">রিডাইরেক্ট চেইন দেখুন ▼</string>
+    <string name="redirect_chain_hide">রিডাইরেক্ট চেইন লুকান ▲</string>
+    <string name="screenshot_preview_desc">ওয়েবসাইট স্ক্রিনশট প্রিভিউ</string>
+    <string name="risk_score_format">ঝুঁকি স্কোর: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
+</resources>

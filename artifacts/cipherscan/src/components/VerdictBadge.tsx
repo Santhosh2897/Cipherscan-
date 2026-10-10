@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
 import { ScanResultVerdict } from '@workspace/api-client-react/src/generated/api.schemas';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface VerdictBadgeProps {
   verdict: ScanResultVerdict | string;
@@ -10,7 +11,8 @@ export interface VerdictBadgeProps {
 }
 
 export function VerdictBadge({ verdict, className, size = 'md' }: VerdictBadgeProps) {
-  const v = verdict.toLowerCase();
+  const { t } = useLanguage();
+  const v = (verdict || '').toLowerCase();
   
   let Icon = ShieldCheck;
   let colorClass = '';
@@ -38,10 +40,12 @@ export function VerdictBadge({ verdict, className, size = 'md' }: VerdictBadgePr
     lg: 16
   }[size];
 
+  const translatedLabel = t(`verdict_${v}`, String(verdict).toUpperCase());
+
   return (
     <div className={cn('inline-flex items-center border font-mono tracking-wider uppercase font-bold rounded-full', colorClass, sizeClass, className)}>
       <Icon size={iconSize} className="shrink-0" />
-      <span>{verdict}</span>
+      <span>{translatedLabel}</span>
     </div>
   );
 }

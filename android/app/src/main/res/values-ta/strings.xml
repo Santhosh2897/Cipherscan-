@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CipherScan</string>
+    <string name="verifying_link">இணைப்பு சரிபார்க்கப்படுகிறது…</string>
+    <string name="verdict_safe">பாதுகாப்பானது</string>
+    <string name="verdict_suspicious">சந்தேகத்திற்குரியது</string>
+    <string name="verdict_malicious">ஆபத்தானது</string>
+    <string name="btn_abort">நிறுத்தி பின்செல்லவும்</string>
+    <string name="btn_proceed">இருப்பினும் தொடரவும்</string>
+    <string name="threat_reasons_heading">ஏன் இது கொடியிடப்பட்டது</string>
+    <string name="redirect_chain_show">திசைதிருப்பல் சங்கிலியைக் காட்டு ▼</string>
+    <string name="redirect_chain_hide">திசைதிருப்பல் சங்கிலியை மறைக்கவும் ▲</string>
+    <string name="screenshot_preview_desc">வலைத்தள முன்னோட்டம்</string>
+    <string name="risk_score_format">ஆபத்து மதிப்பீடு: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
+</resources>

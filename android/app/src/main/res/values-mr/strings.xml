@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CipherScan</string>
+    <string name="verifying_link">लिंक सुरक्षितता तपासत आहे…</string>
+    <string name="verdict_safe">सुरक्षित</string>
+    <string name="verdict_suspicious">संशयास्पद</string>
+    <string name="verdict_malicious">धोकादायक</string>
+    <string name="btn_abort">थांबवा आणि मागे जा</string>
+    <string name="btn_proceed">तरीही पुढे जा</string>
+    <string name="threat_reasons_heading">हे का ध्वजांकित केले गेले</string>
+    <string name="redirect_chain_show">रिडायरेक्ट साखळी दाखवा ▼</string>
+    <string name="redirect_chain_hide">रिडायरेक्ट साखळी लपवा ▲</string>
+    <string name="screenshot_preview_desc">वेबसाइट स्क्रीनशॉट पूर्वावलोकन</string>
+    <string name="risk_score_format">धोका गुण: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
+</resources>

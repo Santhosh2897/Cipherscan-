@@ -13,9 +13,11 @@ import { Card } from '@/components/ui/card';
 import { ListScansVerdict } from '@workspace/api-client-react/src/generated/api.schemas';
 import { useDevice } from '@/context/DeviceContext';
 import { DeviceSelector, ActiveDeviceBanner } from '@/components/DeviceSelector';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ScanHistory() {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [filterVerdict, setFilterVerdict] = useState<ListScansVerdict | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -104,17 +106,15 @@ export default function ScanHistory() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
             <Shield className="text-primary shrink-0" size={24} />
-            <span>SCAN HISTORY</span>
+            <span>{t('scan_history_title')}</span>
             {!isFleetView && (
               <Badge variant="outline" className="text-xs font-mono bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
-                {selectedDevice?.deviceName || 'FILTERED'}
+                {selectedDevice?.deviceName || t('device_scope')}
               </Badge>
             )}
           </h1>
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-            {isFleetView
-              ? 'Complete log of all inspected URLs across connected Android devices and Web Dashboard.'
-              : `Inspected URLs exclusively logged for device ${selectedDevice?.deviceName || selectedDeviceId}.`}
+            {t('scan_history_subtitle')}
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export default function ScanHistory() {
             className="font-mono text-xs gap-1.5 border-border/50 bg-card/50"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : "text-muted-foreground"} />
-            REFRESH
+            {t('refresh')}
           </Button>
 
           <Button
@@ -140,7 +140,7 @@ export default function ScanHistory() {
             className="font-mono text-xs gap-1.5 bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-900/60"
           >
             <Trash2 size={14} />
-            {selectedDeviceId ? "CLEAR DEVICE" : "CLEAR ALL"}
+            {t('clear_history')}
           </Button>
         </div>
       </div>
@@ -197,7 +197,7 @@ export default function ScanHistory() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input 
-              placeholder="Search URLs, domains, categories..." 
+              placeholder={t('search_placeholder')} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-black/20 border-input/50 focus-visible:ring-primary font-mono text-xs sm:text-sm"
@@ -213,7 +213,7 @@ export default function ScanHistory() {
             onClick={() => setFilterVerdict('')}
             className="rounded-full font-mono text-xs tracking-wider border-border/50 shrink-0"
           >
-            ALL
+            {t('filter_all')}
           </Button>
           <Button 
             variant={filterVerdict === 'safe' ? 'default' : 'outline'} 
@@ -221,7 +221,7 @@ export default function ScanHistory() {
             onClick={() => setFilterVerdict('safe')}
             className="rounded-full font-mono text-xs tracking-wider border-[#10B981]/20 hover:bg-[#10B981]/10 hover:text-[#10B981] shrink-0"
           >
-            SAFE
+            {t('filter_safe')}
           </Button>
           <Button 
             variant={filterVerdict === 'suspicious' ? 'default' : 'outline'} 
@@ -229,7 +229,7 @@ export default function ScanHistory() {
             onClick={() => setFilterVerdict('suspicious')}
             className="rounded-full font-mono text-xs tracking-wider border-[#F59E0B]/20 hover:bg-[#F59E0B]/10 hover:text-[#F59E0B] shrink-0"
           >
-            SUSPICIOUS
+            {t('filter_suspicious')}
           </Button>
           <Button 
             variant={filterVerdict === 'malicious' ? 'default' : 'outline'} 
@@ -237,7 +237,7 @@ export default function ScanHistory() {
             onClick={() => setFilterVerdict('malicious')}
             className="rounded-full font-mono text-xs tracking-wider border-[#EF4444]/20 hover:bg-[#EF4444]/10 hover:text-[#EF4444] shrink-0"
           >
-            MALICIOUS
+            {t('filter_malicious')}
           </Button>
         </div>
       </Card>
@@ -247,12 +247,12 @@ export default function ScanHistory() {
           <Table>
             <TableHeader className="bg-muted/50 sticky top-0 z-10">
               <TableRow className="border-border/50 hover:bg-transparent">
-                <TableHead className="w-[80px] sm:w-[100px] font-mono text-xs uppercase tracking-widest">Score</TableHead>
-                <TableHead className="w-[120px] sm:w-[140px] font-mono text-xs uppercase tracking-widest">Verdict</TableHead>
-                <TableHead className="font-mono text-xs uppercase tracking-widest min-w-[200px]">Target URL</TableHead>
-                <TableHead className="w-[140px] font-mono text-xs uppercase tracking-widest">Device</TableHead>
-                <TableHead className="w-[140px] sm:w-[160px] font-mono text-xs uppercase tracking-widest">Category</TableHead>
-                <TableHead className="w-[160px] sm:w-[180px] font-mono text-xs uppercase tracking-widest text-right">Scanned At</TableHead>
+                <TableHead className="w-[80px] sm:w-[100px] font-mono text-xs uppercase tracking-widest">{t('table_score')}</TableHead>
+                <TableHead className="w-[120px] sm:w-[140px] font-mono text-xs uppercase tracking-widest">{t('table_verdict')}</TableHead>
+                <TableHead className="font-mono text-xs uppercase tracking-widest min-w-[200px]">{t('table_url')}</TableHead>
+                <TableHead className="w-[140px] font-mono text-xs uppercase tracking-widest">{t('device_scope')}</TableHead>
+                <TableHead className="w-[140px] sm:w-[160px] font-mono text-xs uppercase tracking-widest">{t('threat_breakdown')}</TableHead>
+                <TableHead className="w-[160px] sm:w-[180px] font-mono text-xs uppercase tracking-widest text-right">{t('table_time')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -265,7 +265,7 @@ export default function ScanHistory() {
               ) : filteredItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground font-mono text-sm">
-                    {searchQuery || filterVerdict || selectedDeviceId ? 'No matching scans found for filter.' : 'No scans recorded yet.'}
+                    {t('no_records_found')}
                   </TableCell>
                 </TableRow>
               ) : (

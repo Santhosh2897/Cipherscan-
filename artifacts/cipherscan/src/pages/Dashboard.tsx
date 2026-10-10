@@ -20,9 +20,12 @@ import { VerdictBadge } from '@/components/VerdictBadge';
 import { Link } from 'wouter';
 import { useDevice } from '@/context/DeviceContext';
 import { DeviceSelector, ActiveDeviceBanner } from '@/components/DeviceSelector';
+import { useLanguage } from '@/context/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { selectedDeviceId, isFleetView, selectedDevice, clearDeviceFilter, isAdmin, isDeviceUser } = useDevice();
 
@@ -63,7 +66,7 @@ export default function Dashboard() {
       <div className="flex-1 p-4 flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-4 text-primary">
           <Activity size={32} className="animate-pulse" />
-          <span className="font-mono tracking-widest text-sm animate-pulse">GATHERING INTEL...</span>
+          <span className="font-mono tracking-widest text-sm animate-pulse">{t('gathering_intel')}</span>
         </div>
       </div>
     );
@@ -80,16 +83,16 @@ export default function Dashboard() {
             <ShieldAlert size={36} className="text-red-400" />
           </div>
           <div>
-            <h2 className="text-lg font-mono font-bold text-foreground">Session Expired</h2>
+            <h2 className="text-lg font-mono font-bold text-foreground">{t('session_expired')}</h2>
             <p className="text-sm text-muted-foreground font-mono mt-2">
-              Your security session has timed out. Please re-authenticate to continue.
+              {t('session_expired_desc')}
             </p>
           </div>
           <button
             onClick={() => { sessionStorage.clear(); window.location.reload(); }}
             className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-mono text-sm font-semibold hover:opacity-90 transition-opacity"
           >
-            Re-authenticate →
+            {t('reauthenticate')}
           </button>
         </div>
       </div>
@@ -102,19 +105,19 @@ export default function Dashboard() {
       case 'link':
         return (
           <Badge variant="outline" className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border-blue-500/30 flex items-center gap-1 shrink-0">
-            <Smartphone size={10} /> {label || 'Android Mobile'}
+            <Smartphone size={10} /> {label || t('android_mobile')}
           </Badge>
         );
       case 'camera':
         return (
           <Badge variant="outline" className="text-[10px] font-mono bg-purple-500/10 text-purple-400 border-purple-500/30 flex items-center gap-1 shrink-0">
-            <Camera size={10} /> {label ? `${label} (QR)` : 'QR Camera'}
+            <Camera size={10} /> {label ? `${label} (QR)` : t('qr_camera')}
           </Badge>
         );
       default:
         return (
           <Badge variant="outline" className="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/30 flex items-center gap-1 shrink-0">
-            <Globe size={10} /> Web Dashboard
+            <Globe size={10} /> {t('web_dashboard')}
           </Badge>
         );
     }
@@ -126,29 +129,30 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight flex items-center gap-2.5 sm:gap-3">
             <Crosshair className="text-primary shrink-0" size={24} />
-            <span>{isDeviceUser ? 'DEVICE DEFENSE CENTER' : 'COMMAND CENTER'}</span>
+            <span>{isDeviceUser ? t('device_defense_center') : t('command_center')}</span>
             {!isFleetView && (
               <Badge variant="outline" className="text-xs font-mono bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
-                {selectedDevice?.deviceName || 'DEVICE VIEW'}
+                {selectedDevice?.deviceName || t('device_scope')}
               </Badge>
             )}
             {isAdmin && (
               <Badge variant="outline" className="text-[10px] font-mono bg-blue-500/10 text-blue-300 border-blue-500/30 hidden sm:inline-flex">
-                ADMIN
+                {t('admin_badge')}
               </Badge>
             )}
           </h1>
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
             {isFleetView
-              ? 'Real-time threat intelligence & mobile ecosystem defense status.'
+              ? t('fleet_subtitle')
               : isDeviceUser
-              ? `Real-time protection & scan telemetry for your device ${selectedDevice?.deviceName || selectedDeviceId}.`
-              : `Scoped telemetry & scan records for device ${selectedDevice?.deviceName || selectedDeviceId}.`}
+              ? t('device_subtitle')
+              : t('device_subtitle')}
           </p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
           <DeviceSelector />
+          <LanguageSelector variant="compact" />
 
           <Button
             variant="outline"
@@ -158,7 +162,7 @@ export default function Dashboard() {
             className="font-mono text-xs gap-1.5 border-border/50 bg-card/50"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : "text-muted-foreground"} />
-            REFRESH
+            {t('refresh')}
           </Button>
 
           <Button
@@ -169,7 +173,7 @@ export default function Dashboard() {
             className="font-mono text-xs gap-1.5 bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-900/60"
           >
             <Trash2 size={14} />
-            {isFleetView ? 'RESET TELEMETRY' : 'CLEAR DEVICE SCANS'}
+            {isFleetView ? t('reset_data') : t('reset_data')}
           </Button>
 
           {/* Security Level Indicator Card */}
@@ -196,26 +200,26 @@ export default function Dashboard() {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard 
-            title="Total Scans" 
+            title={t('total_scans')} 
             value={formatNumber(stats.totalScans)} 
             icon={Activity} 
             colorClass="text-primary border-primary/20 bg-primary/10"
           />
           <StatsCard 
-            title="Threats Blocked" 
+            title={t('threats_detected')} 
             value={formatNumber(stats.threatsBlocked)} 
             icon={ShieldX} 
             colorClass="text-destructive border-destructive/20 bg-destructive/10"
             trend={{ value: 12.5, label: "vs last week" }}
           />
           <StatsCard 
-            title="Mobile Link Scans" 
+            title={t('android_mobile')} 
             value={formatNumber(stats.mobileScans || 0)} 
             icon={Smartphone} 
             colorClass="text-blue-400 border-blue-500/20 bg-blue-500/10"
           />
           <StatsCard 
-            title="Avg Risk Score" 
+            title={t('risk_score')} 
             value={stats.avgRiskScore.toFixed(1)} 
             icon={ShieldAlert} 
             colorClass="text-amber-500 border-amber-500/20 bg-amber-500/10"
@@ -336,7 +340,7 @@ export default function Dashboard() {
             {isFleetView ? "Live Multi-Device Scan Feed" : `Live Scan Feed — ${selectedDevice?.deviceName || selectedDeviceId}`}
           </CardTitle>
           <Link href="/scans" className="text-xs font-mono text-primary hover:underline uppercase tracking-widest">
-            View All
+            {t('view_all')}
           </Link>
         </CardHeader>
         <CardContent className="p-0">

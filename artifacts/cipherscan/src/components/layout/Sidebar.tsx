@@ -3,6 +3,8 @@ import { Link, useLocation } from 'wouter';
 import { Shield, LayoutDashboard, Search, History, Activity, X, Zap, Smartphone, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDevice } from '@/context/DeviceContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -11,12 +13,13 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
+  const { t } = useLanguage();
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/analyze', label: 'URL Analyzer', icon: Search },
-    { href: '/scans', label: 'Scan History', icon: History },
-    { href: '/threat-intel', label: 'Threat Intel Feed', icon: Zap, badge: 'LIVE' },
+    { href: '/', label: t('nav_dashboard'), icon: LayoutDashboard },
+    { href: '/analyze', label: t('nav_analyzer'), icon: Search },
+    { href: '/scans', label: t('nav_history'), icon: History },
+    { href: '/threat-intel', label: t('nav_threat_intel'), icon: Zap, badge: 'LIVE' },
   ];
 
   return (
@@ -57,7 +60,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <div className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
           <div className="px-2 pb-2">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-sidebar-foreground/50 font-semibold">Intelligence</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-sidebar-foreground/50 font-semibold">{t('intel_section')}</p>
           </div>
           {navItems.map((item) => {
             const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
@@ -85,13 +88,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </div>
 
-        <div className="p-4 border-t border-sidebar-border space-y-2">
+        <div className="p-4 border-t border-sidebar-border space-y-2.5">
+          {/* Language Selector */}
+          <LanguageSelector variant="full" />
+
           {/* Active Device Scope Widget */}
           <DeviceScopeWidget />
 
-          <div className="flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/50">
+          <div className="flex items-center gap-3 px-3 py-1.5 text-sm text-sidebar-foreground/50">
             <Activity size={16} className="text-emerald-500 animate-pulse" />
-            <span className="font-mono text-xs">AGENT ACTIVE</span>
+            <span className="font-mono text-xs">{t('agent_active')}</span>
           </div>
         </div>
       </aside>
@@ -101,17 +107,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
 function DeviceScopeWidget() {
   const { selectedDeviceId, selectedDevice, clearDeviceFilter, isFleetView } = useDevice();
+  const { t } = useLanguage();
 
   if (isFleetView) {
     return (
       <div className="p-2.5 bg-secondary/30 rounded-lg border border-border/40 font-mono text-[11px] space-y-1">
         <div className="flex items-center justify-between text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <Globe size={12} className="text-primary" /> Scope
+            <Globe size={12} className="text-primary" /> {t('scope')}
           </span>
-          <span className="text-primary font-semibold text-[10px]">FLEET VIEW</span>
+          <span className="text-primary font-semibold text-[10px]">{t('fleet_view')}</span>
         </div>
-        <p className="text-[10px] text-muted-foreground/70">All endpoints aggregated</p>
+        <p className="text-[10px] text-muted-foreground/70">{t('all_endpoints_aggregated')}</p>
       </div>
     );
   }
@@ -120,7 +127,7 @@ function DeviceScopeWidget() {
     <div className="p-2.5 bg-cyan-950/40 rounded-lg border border-cyan-500/30 font-mono text-[11px] space-y-1">
       <div className="flex items-center justify-between text-cyan-300">
         <span className="flex items-center gap-1.5">
-          <Smartphone size={12} className="text-cyan-400" /> Device Scope
+          <Smartphone size={12} className="text-cyan-400" /> {t('device_scope')}
         </span>
         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
       </div>
@@ -131,7 +138,7 @@ function DeviceScopeWidget() {
         onClick={clearDeviceFilter}
         className="text-[10px] text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 pt-0.5"
       >
-        ✕ Switch to Fleet
+        {t('switch_to_fleet')}
       </button>
     </div>
   );

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CipherScan</string>
+    <string name="verifying_link">లింక్ భద్రతను తనిఖీ చేస్తోంది…</string>
+    <string name="verdict_safe">సురక్షితం</string>
+    <string name="verdict_suspicious">అనుమానాస్పదం</string>
+    <string name="verdict_malicious">ప్రమాదకరం</string>
+    <string name="btn_abort">ఆపి వెనక్కి వెళ్ళండి</string>
+    <string name="btn_proceed">అయినా కొనసాగించండి</string>
+    <string name="threat_reasons_heading">ఎందుకు ఇది ఫ్లాగ్ చేయబడింది</string>
+    <string name="redirect_chain_show">రీడైరెక్ట్ గొలుసును చూపించు ▼</string>
+    <string name="redirect_chain_hide">రీడైరెక్ట్ గొలుసును దాచు ▲</string>
+    <string name="screenshot_preview_desc">వెబ్‌సైట్ స్క్రీన్‌షాట్ ప్రివ్యూ</string>
+    <string name="risk_score_format">ప్రమాద స్కోర్: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
+</resources>

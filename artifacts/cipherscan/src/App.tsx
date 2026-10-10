@@ -5,8 +5,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
-import Login, { isAuthenticated, getStoredToken, clearAuth } from '@/pages/Login';
+import Login, { isAuthenticated, getStoredToken, getStoredDeviceId, getStoredRole, clearAuth } from '@/pages/Login';
 import { DeviceProvider } from '@/context/DeviceContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 // Pages
 import Dashboard from '@/pages/Dashboard';
@@ -97,11 +98,26 @@ function Router() {
 }
 
 /**
- * AuthGuard: Shows PIN login until authenticated.
- * No DASHBOARD_PIN configured on server → always passes through (dev mode).
+ * AuthGuard: Shows PIN/Device login until authenticated.
+ * If a ?deviceId= parameter is present in the URL that doesn't match the active session,
+ * it routes through Login to automatically bind and authenticate the device.
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const [authed, setAuthed] = useState(() => isAuthenticated());
+  const [authed, setAuthed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlDeviceId = params.get('deviceId');
+      if (urlDeviceId && urlDeviceId.trim() !== '' && urlDeviceId !== 'all') {
+        const cleanUrlId = urlDeviceId.trim();
+        const storedDeviceId = getStoredDeviceId();
+        const storedRole = getStoredRole();
+        if (storedRole !== 'device' || storedDeviceId !== cleanUrlId) {
+          return false;
+        }
+      }
+    }
+    return isAuthenticated();
+  });
 
   if (!authed) {
     return (
@@ -118,14 +134,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthGuard>
-          <DeviceProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-              <Router />
-            </WouterRouter>
-          </DeviceProvider>
-        </AuthGuard>
-        <Toaster />
+        <LanguageProvider>
+          <AuthGuard>
+            <DeviceProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+                <Router />
+              </WouterRouter>
+            </DeviceProvider>
+          </AuthGuard>
+          <Toaster />
+        </LanguageProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

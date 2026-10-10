@@ -5,9 +5,11 @@ import { Search, Loader2, ScanLine, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScanResultCard } from '@/components/ScanResultCard';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Analyze() {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [url, setUrl] = useState(() => sessionStorage.getItem('cipherscan_last_url') || '');
   const [lastResult, setLastResult] = useState<ScanResult | null>(() => {
     const cached = sessionStorage.getItem('cipherscan_last_result');
@@ -58,10 +60,10 @@ export default function Analyze() {
           <ScanLine size={28} className="text-primary" />
         </div>
         <h1 className="text-2xl sm:text-4xl font-bold font-mono tracking-tight">
-          DEEP SCAN <span className="text-primary">ANALYSIS</span>
+          {t('deep_scan_title')}
         </h1>
         <p className="text-muted-foreground text-xs sm:text-sm max-w-2xl mx-auto px-2">
-          Submit a URL or UPI payment string for real-time threat analysis including redirect tracing, domain reputation checking, and sandbox inspection.
+          {t('deep_scan_subtitle')}
         </p>
       </div>
 
@@ -75,7 +77,7 @@ export default function Analyze() {
               <input 
                 type="text" 
                 className="flex-1 bg-transparent border-none px-3 py-3 sm:px-4 sm:py-4 focus:outline-none font-mono text-xs sm:text-sm placeholder:text-muted-foreground/50 w-full"
-                placeholder="https://example.com or upi://pay?pa=..."
+                placeholder={t('url_placeholder')}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
@@ -88,12 +90,12 @@ export default function Analyze() {
               {analyzeMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ANALYZING
+                  {t('analyzing_button')}
                 </>
               ) : (
                 <>
                   <Search className="mr-2 h-4 w-4" />
-                  SCAN
+                  {t('scan_button')}
                 </>
               )}
             </Button>
@@ -108,13 +110,13 @@ export default function Analyze() {
             <div className="absolute inset-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin"></div>
             <ShieldCheck size={32} className="text-primary animate-pulse" />
           </div>
-          <p className="font-mono text-primary text-sm tracking-widest uppercase animate-pulse">Running diagnostics...</p>
+          <p className="font-mono text-primary text-sm tracking-widest uppercase animate-pulse">{t('running_diagnostics')}</p>
         </div>
       )}
 
       {activeResult && !analyzeMutation.isPending && (
         <div className="w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <h3 className="text-sm font-mono tracking-widest text-muted-foreground uppercase mb-4 border-b border-border/50 pb-2">Analysis Results</h3>
+          <h3 className="text-sm font-mono tracking-widest text-muted-foreground uppercase mb-4 border-b border-border/50 pb-2">{t('analysis_results')}</h3>
           <ScanResultCard scan={activeResult} isDetailed />
         </div>
       )}

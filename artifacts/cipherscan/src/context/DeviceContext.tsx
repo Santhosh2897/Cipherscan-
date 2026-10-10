@@ -25,18 +25,18 @@ const STORAGE_KEY = 'cipherscan_device_id';
 function getInitialDeviceId(): string {
   if (typeof window === 'undefined') return '';
 
-  // 1. Check if authenticated as a device user
-  const storedRole = getStoredRole();
-  const sessionDeviceId = getStoredDeviceId();
-  if (storedRole === 'device' && sessionDeviceId) {
-    return sessionDeviceId;
-  }
-
-  // 2. Check URL param (e.g. ?deviceId=xxx)
+  // 1. Check URL param (e.g. ?deviceId=xxx) with highest priority
   const params = new URLSearchParams(window.location.search);
   const urlDevice = params.get('deviceId');
   if (urlDevice && urlDevice.trim() !== '' && urlDevice !== 'all') {
     return urlDevice.trim();
+  }
+
+  // 2. Check if authenticated as a device user
+  const storedRole = getStoredRole();
+  const sessionDeviceId = getStoredDeviceId();
+  if (storedRole === 'device' && sessionDeviceId) {
+    return sessionDeviceId;
   }
 
   // 3. Check localStorage
@@ -63,9 +63,14 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
 
   // Sync state if role or session changes
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlDevice = params.get('deviceId');
     const currentRole = getStoredRole();
     setRole(currentRole);
-    if (currentRole === 'device') {
+
+    if (urlDevice && urlDevice.trim() !== '' && urlDevice !== 'all') {
+      setSelectedDeviceIdState(urlDevice.trim());
+    } else if (currentRole === 'device') {
       const devId = getStoredDeviceId();
       if (devId) {
         setSelectedDeviceIdState(devId);

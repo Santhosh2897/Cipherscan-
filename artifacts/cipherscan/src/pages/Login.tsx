@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { Shield, Smartphone, Lock, ArrowRight, Activity, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const SESSION_TOKEN_KEY = 'cs_auth_token';
 const SESSION_ROLE_KEY = 'cs_auth_role';
@@ -66,6 +68,7 @@ interface LoginProps {
 }
 
 export default function Login({ onSuccess }: LoginProps) {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<UserRole>('device');
   const [deviceIdInput, setDeviceIdInput] = useState('');
   const [digits, setDigits] = useState<string[]>(Array(PIN_LENGTH).fill(''));
@@ -81,7 +84,14 @@ export default function Login({ onSuccess }: LoginProps) {
     const urlDeviceId = params.get('deviceId');
 
     if (urlDeviceId && urlDeviceId.trim() !== '' && urlDeviceId !== 'all') {
-      submitDeviceLogin(urlDeviceId.trim(), true);
+      const cleanId = urlDeviceId.trim();
+      setDeviceIdInput(cleanId);
+      try {
+        localStorage.setItem('cipherscan_device_id', cleanId);
+      } catch {
+        // ignore
+      }
+      submitDeviceLogin(cleanId, true);
     } else {
       setAutoChecking(false);
       // Pre-fill device ID from localStorage if exists
@@ -211,21 +221,26 @@ export default function Login({ onSuccess }: LoginProps) {
     return (
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 text-cyan-400 font-mono">
         <Activity size={36} className="animate-pulse mb-3" />
-        <p className="text-sm tracking-widest animate-pulse">CONNECTING DEVICE TELEMETRY...</p>
+        <p className="text-sm tracking-widest animate-pulse">{t('gathering_intel')}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 font-sans relative">
+      {/* Top right language switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSelector variant="compact" />
+      </div>
+
       <div className="w-full max-w-md">
         {/* Brand Logo Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25 mb-4">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-mono text-white tracking-tight">CIPHERSCAN</h1>
-          <p className="text-gray-400 text-xs sm:text-sm font-mono mt-1">Mobile Threat Defense & Command Center</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-mono text-white tracking-tight">{t('brand_name')}</h1>
+          <p className="text-gray-400 text-xs sm:text-sm font-mono mt-1">{t('login_subtitle')}</p>
         </div>
 
         {/* Card Container */}
@@ -249,7 +264,7 @@ export default function Login({ onSuccess }: LoginProps) {
               }`}
             >
               <Smartphone size={14} />
-              <span>Device View</span>
+              <span>{t('tab_device_user')}</span>
             </button>
 
             <button
@@ -266,7 +281,7 @@ export default function Login({ onSuccess }: LoginProps) {
               }`}
             >
               <Lock size={14} />
-              <span>Admin Portal</span>
+              <span>{t('tab_admin')}</span>
             </button>
           </div>
 
@@ -275,11 +290,11 @@ export default function Login({ onSuccess }: LoginProps) {
             <form onSubmit={handleDeviceSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono font-medium text-gray-300 mb-1.5">
-                  Your Android Device ID
+                  {t('enter_device_id')}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 3a7f9201-4bc1-..."
+                  placeholder={t('device_id_placeholder')}
                   value={deviceIdInput}
                   onChange={(e) => {
                     setDeviceIdInput(e.target.value);
@@ -289,7 +304,7 @@ export default function Login({ onSuccess }: LoginProps) {
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white font-mono text-xs focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all placeholder:text-gray-500"
                 />
                 <p className="text-[11px] text-gray-400 font-mono mt-1.5 leading-relaxed">
-                  Enter your phone's identifier to view only your device's scans and live threat intelligence.
+                  {t('pin_description')}
                 </p>
               </div>
 
@@ -311,10 +326,10 @@ export default function Login({ onSuccess }: LoginProps) {
                   transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <span>Connecting...</span>
+                  <span>{t('authenticating')}</span>
                 ) : (
                   <>
-                    <span>Unlock Device View</span>
+                    <span>{t('authenticate_btn')}</span>
                     <ArrowRight size={15} />
                   </>
                 )}
@@ -327,7 +342,7 @@ export default function Login({ onSuccess }: LoginProps) {
             <form onSubmit={handleAdminSubmit} className="space-y-6">
               <div className="text-center">
                 <p className="text-gray-300 text-xs font-mono">
-                  Enter 6-digit Admin PIN for Fleet Overview
+                  {t('enter_pin')}
                 </p>
               </div>
 
@@ -372,7 +387,7 @@ export default function Login({ onSuccess }: LoginProps) {
                   disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100
                   transition-all flex items-center justify-center gap-2"
               >
-                {loading ? 'Verifying...' : 'Unlock Fleet Admin Center'}
+                {loading ? t('authenticating') : t('authenticate_btn')}
               </button>
             </form>
           )}

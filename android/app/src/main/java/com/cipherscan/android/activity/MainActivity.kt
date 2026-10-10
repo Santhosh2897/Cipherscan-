@@ -1,6 +1,9 @@
 package com.cipherscan.android.activity
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -48,6 +51,8 @@ class MainActivity : AppCompatActivity() {
 
         val cardWebDashboard = findViewById<CardView>(R.id.cardOpenWebDashboard)
         val btnLaunchDashboard = findViewById<Button>(R.id.btnLaunchDashboard)
+        val tvDisplayDeviceId = findViewById<TextView>(R.id.tvDisplayDeviceId)
+        val btnCopyDeviceId = findViewById<Button>(R.id.btnCopyDeviceId)
         val etTargetUrl = findViewById<EditText>(R.id.etTargetUrl)
         val btnScanNow = findViewById<Button>(R.id.btnScanNow)
         val btnTestSafe = findViewById<Button>(R.id.btnTestSafe)
@@ -57,11 +62,20 @@ class MainActivity : AppCompatActivity() {
         tvSmsStatusBadge = findViewById(R.id.tvSmsStatusBadge)
         btnToggleSmsProtection = findViewById(R.id.btnToggleSmsProtection)
 
+        val currentDeviceId = DeviceUtils.getDeviceId(this)
+        tvDisplayDeviceId?.text = currentDeviceId
+
+        btnCopyDeviceId?.setOnClickListener {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("CipherScan Device ID", currentDeviceId)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Device ID copied to clipboard!", Toast.LENGTH_SHORT).show()
+        }
+
         // Open live web dashboard with this device's ID for seamless auto-login
         val openDashboardAction = {
-            val deviceId = DeviceUtils.getDeviceId(this)
             val dashboardBase = "https://cipherscan-dashboard.vercel.app"
-            val targetUrl = "$dashboardBase/?deviceId=$deviceId"
+            val targetUrl = "$dashboardBase/?deviceId=$currentDeviceId"
             BrowserLauncher.openUrl(this, targetUrl)
         }
         cardWebDashboard?.setOnClickListener { openDashboardAction() }
