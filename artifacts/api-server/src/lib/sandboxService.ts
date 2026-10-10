@@ -12,8 +12,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PREVIEWS_DIR = path.resolve(__dirname, "..", "..", "public", "previews");
 
 let browserInstance: Browser | null = null;
+let browserJobCount = 0;
+const MAX_JOBS_PER_BROWSER = 50;
 
 async function getBrowser(): Promise<Browser> {
+  if (browserInstance && browserJobCount >= MAX_JOBS_PER_BROWSER) {
+    try {
+      await browserInstance.close();
+    } catch {}
+    browserInstance = null;
+    browserJobCount = 0;
+  }
+
   if (!browserInstance || !browserInstance.isConnected()) {
     browserInstance = await chromium.launch({
       headless: true,
@@ -22,11 +32,11 @@ async function getBrowser(): Promise<Browser> {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--no-zygote",
-        "--single-process"
       ]
     });
+    browserJobCount = 0;
   }
+  browserJobCount++;
   return browserInstance;
 }
 

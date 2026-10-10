@@ -146,14 +146,30 @@ const clearScansHandler = async (req: any, res: any) => {
       });
     }
 
-    const deleted = await (deviceId === "all"
-      ? db.delete(scansTable)
-      : db.delete(scansTable).where(eq(scansTable.deviceId, deviceId)))
-      .returning();
+    if (deviceId === "all") {
+      const adminSecret = req.header("x-admin-secret");
+      const configuredAdminSecret = process.env.ADMIN_SECRET;
+
+      if (!configuredAdminSecret || adminSecret !== configuredAdminSecret) {
+        return res.status(403).json({
+          error: "Forbidden",
+          message: "Mass deletion of all scan history is restricted to verified administrators.",
+        });
+      }
+
+      const deleted = await db.delete(scansTable).returning();
+      return res.json({
+        success: true,
+        message: "All scan history cleared by administrator.",
+        deletedCount: deleted.length,
+      });
+    }
+
+    const deleted = await db.delete(scansTable).where(eq(scansTable.deviceId, deviceId)).returning();
 
     return res.json({
       success: true,
-      message: deviceId === "all" ? "All scan history cleared." : `Scan history cleared for device ${deviceId}.`,
+      message: `Scan history cleared for device ${deviceId}.`,
       deletedCount: deleted.length,
     });
   } catch (error: any) {

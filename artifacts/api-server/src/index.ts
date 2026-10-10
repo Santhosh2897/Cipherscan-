@@ -10,6 +10,20 @@ if (Number.isNaN(port) || port <= 0) {
 
 const host = "0.0.0.0";
 
-app.listen(port, host, () => {
+const server = app.listen(port, host, () => {
   logger.info({ port, host }, "Server listening");
+});
+
+// Guard against unhandled promise rejections (e.g. external network timeouts)
+process.on("unhandledRejection", (reason: unknown) => {
+  logger.error({ reason }, "Unhandled Promise Rejection captured — process kept alive");
+});
+
+// Guard against uncaught runtime exceptions
+process.on("uncaughtException", (error: Error) => {
+  logger.fatal({ err: error.message, stack: error.stack }, "Uncaught Exception occurred");
+  // Graceful shutdown after letting ongoing connections complete
+  server.close(() => {
+    process.exit(1);
+  });
 });
