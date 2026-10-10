@@ -12,5 +12,36 @@
     <string name="redirect_chain_hide">रीडायरेक्ट श्रृंखला छिपाएं ▲</string>
     <string name="screenshot_preview_desc">वेबसाइट स्क्रीनशॉट पूर्वावलोकन</string>
     <string name="risk_score_format">जोखिम स्कोर: %1$d/100</string>
-    <string name="reason_bullet_format">• %1$s</string>
+    <string name="tagline_threat_intel">रीयल-टाइम थ्रेट इंटेलिजेंस</string>
+    <string name="title_link_interception">सक्रिय लिंक अवरोधन</string>
+    <string name="desc_link_interception">मैलवेयर, फ़िशिंग और धोखाधड़ी से आने वाले HTTP/HTTPS लिंक और UPI भुगतानों की सुरक्षा।</string>
+    <string name="title_device_dashboard">डिवाइस डिफेंस डैशबोर्ड</string>
+    <string name="btn_open_external">खोलें ↗</string>
+    <string name="desc_device_dashboard">अपनी रीयल-टाइम स्कैन टेलीमेट्री और रक्षा स्थिति देखें</string>
+    <string name="label_device_id">डिवाइस आईडी: </string>
+    <string name="loading_ellipsis">लोड हो रहा है...</string>
+    <string name="btn_copy">कॉपी करें 📋</string>
+    <string name="btn_open_dashboard">डिवाइस सुरक्षा डैशबोर्ड खोलें</string>
+    <string name="title_sms_shield">एसएमएस फ़िशिंग शील्ड</string>
+    <string name="badge_active">सक्रिय</string>
+    <string name="badge_disabled">अक्षम</string>
+    <string name="desc_sms_shield">आने वाले एसएमएस संदेशों में लिंक का स्वचालित रूप से विश्लेषण करता है और आपके टैप करने से पहले घोटाले के लिंक की चेतावनी देता है।</string>
+    <string name="btn_enable_sms">एसएमएस सुरक्षा सक्षम करें</string>
+    <string name="btn_sms_active">✓ एसएमएस शील्ड सक्रिय</string>
+    <string name="title_manual_scanner">मैन्युअल यूआरएल / यूपीआई स्कैनर</string>
+    <string name="hint_target_url">स्कैन करने के लिए यूआरएल या upi:// स्ट्रिंग चिपकाएं...</string>
+    <string name="btn_scan_now">खतरे का निरीक्षण और विश्लेषण करें</string>
+    <string name="btn_scan_qr">📷 कैमरे से क्यूआर कोड स्कैन करें</string>
+    <string name="title_quick_test">त्वरित परीक्षण लिंक</string>
+    <string name="btn_test_safe">सुरक्षित परीक्षण</string>
+    <string name="btn_test_malware">मैलवेयर परीक्षण</string>
+    <string name="badge_instant_cache">⚡ त्वरित कैश</string>
+    <string name="badge_trusted_domain">⭐ विश्वसनीय डोमेन</string>
+    <string name="badge_community_trust">👥 समुदाय विश्वास</string>
+    <string name="title_upi_verification">💳 यूपीआई भुगतान सत्यापन</string>
+    <string name="threat_details_heading">खतरे का विवरण</string>
+    <string name="btn_block_exit">रोकें और बाहर निकलें</string>
+    <string name="btn_report_threat">🚩 संदिग्ध खतरे के रूप में रिपोर्ट करें</string>
+    <string name="btn_open_web_dashboard">वेब डैशबोर्ड में खोलें ↗</string>
 </resources>
+

@@ -12,5 +12,36 @@
     <string name="redirect_chain_hide">திசைதிருப்பல் சங்கிலியை மறைக்கவும் ▲</string>
     <string name="screenshot_preview_desc">வலைத்தள முன்னோட்டம்</string>
     <string name="risk_score_format">ஆபத்து மதிப்பீடு: %1$d/100</string>
-    <string name="reason_bullet_format">• %1$s</string>
+    <string name="tagline_threat_intel">நேரலை அச்சுறுத்தல் நுண்ணறிவு</string>
+    <string name="title_link_interception">செயலில் உள்ள இணைப்பு இடைமறிப்பு</string>
+    <string name="desc_link_interception">மால்வேர், ஃபிஷிங் மற்றும் மோசடிகளிலிருந்து வரும் HTTP/HTTPS இணைப்புகள் மற்றும் UPI கொடுப்பனவுகளைப் பாதுகாக்கிறது.</string>
+    <string name="title_device_dashboard">சாதன பாதுகாப்பு டாஷ்போர்டு</string>
+    <string name="btn_open_external">திற ↗</string>
+    <string name="desc_device_dashboard">உங்கள் நிகழ்நேர ஸ்கேன் டெலிமெட்ரி மற்றும் பாதுகாப்பு நிலையைக் காண்க</string>
+    <string name="label_device_id">சாதன ID: </string>
+    <string name="loading_ellipsis">ஏற்றுகிறது...</string>
+    <string name="btn_copy">நகலெடு 📋</string>
+    <string name="btn_open_dashboard">சாதன பாதுகாப்பு டாஷ்போர்டைத் திற</string>
+    <string name="title_sms_shield">SMS ஃபிஷிங் கேடயம்</string>
+    <string name="badge_active">செயலில்</string>
+    <string name="badge_disabled">முடக்கப்பட்டது</string>
+    <string name="desc_sms_shield">உள்வரும் SMS செய்திகளில் உள்ள இணைப்புகளைத் தானாக ஆய்வு செய்து, நீங்கள் தட்டுவதற்கு முன்பே மோசடி இணைப்புகளை எச்சரிக்கிறது.</string>
+    <string name="btn_enable_sms">SMS பாதுகாப்பை இயக்கு</string>
+    <string name="btn_sms_active">✓ SMS கேடயம் செயலில் உள்ளது</string>
+    <string name="title_manual_scanner">கைமுறை URL / UPI ஸ்கேனர்</string>
+    <string name="hint_target_url">ஸ்கேன் செய்ய URL அல்லது upi:// ஒட்டவும்...</string>
+    <string name="btn_scan_now">அச்சுறுத்தலை ஆய்வு செய்</string>
+    <string name="btn_scan_qr">📷 கேமரா மூலம் QR குறியீட்டை ஸ்கேன் செய்</string>
+    <string name="title_quick_test">விரைவு சோதனை இணைப்புகள்</string>
+    <string name="btn_test_safe">பாதுகாப்பான சோதனை</string>
+    <string name="btn_test_malware">தீம்பொருள் சோதனை</string>
+    <string name="badge_instant_cache">⚡ உடனடி கேச்</string>
+    <string name="badge_trusted_domain">⭐ நம்பகமான டொமைன்</string>
+    <string name="badge_community_trust">👥 சமூக நம்பிக்கை</string>
+    <string name="title_upi_verification">💳 UPI கொடுப்பனவு சரிபார்ப்பு</string>
+    <string name="threat_details_heading">அச்சுறுத்தல் விவரங்கள்</string>
+    <string name="btn_block_exit">தடு &amp; வெளியேறு</string>
+    <string name="btn_report_threat">🚩 சந்தேகத்திற்கிடமான அச்சுறுத்தலாகப் புகாரளி</string>
+    <string name="btn_open_web_dashboard">வலை டாஷ்போர்டில் திற ↗</string>
 </resources>
+

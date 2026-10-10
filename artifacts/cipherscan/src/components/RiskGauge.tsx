@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface RiskGaugeProps {
   score: number;
@@ -8,6 +9,7 @@ export interface RiskGaugeProps {
 }
 
 export function RiskGauge({ score, className, size = 200 }: RiskGaugeProps) {
+  const { t } = useLanguage();
   // Normalize score between 0 and 100
   const normalizedScore = Math.max(0, Math.min(100, score));
   
@@ -58,8 +60,9 @@ export function RiskGauge({ score, className, size = 200 }: RiskGaugeProps) {
         <span className="text-3xl font-bold font-mono tracking-tight" style={{ color: strokeColor }}>
           {normalizedScore}
         </span>
-        <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest mt-1">Risk Score</span>
+        <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest mt-1">{t('risk_score')}</span>
       </div>
     </div>
   );
 }
+

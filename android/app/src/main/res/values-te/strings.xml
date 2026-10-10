@@ -12,5 +12,36 @@
     <string name="redirect_chain_hide">రీడైరెక్ట్ గొలుసును దాచు ▲</string>
     <string name="screenshot_preview_desc">వెబ్‌సైట్ స్క్రీన్‌షాట్ ప్రివ్యూ</string>
     <string name="risk_score_format">ప్రమాద స్కోర్: %1$d/100</string>
-    <string name="reason_bullet_format">• %1$s</string>
+    <string name="tagline_threat_intel">రియల్-టైమ్ ముప్పు ఇంటెలిజెన్స్</string>
+    <string name="title_link_interception">క్రియాశీల లింక్ నిరోధం</string>
+    <string name="desc_link_interception">మాల్వేర్, ఫిషింగ్ మరియు మోసాల నుండి వచ్చే HTTP/HTTPS లింక్‌లు మరియు UPI చెల్లింపులను రక్షిస్తుంది.</string>
+    <string name="title_device_dashboard">పరికర రక్షణ డ్యాష్‌బోర్డ్</string>
+    <string name="btn_open_external">తెరువు ↗</string>
+    <string name="desc_device_dashboard">మీ రియల్-టైమ్ స్కాన్ టెలిమెట్రీ మరియు రక్షణ స్థితిని వీక్షించండి</string>
+    <string name="label_device_id">పరికర ID: </string>
+    <string name="loading_ellipsis">లోడ్ అవుతోంది...</string>
+    <string name="btn_copy">కాపీ చేయి 📋</string>
+    <string name="btn_open_dashboard">పరికర భద్రతా డ్యాష్‌బోర్డ్‌ను తెరవండి</string>
+    <string name="title_sms_shield">SMS ఫిషింగ్ షీల్డ్</string>
+    <string name="badge_active">క్రియాశీలం</string>
+    <string name="badge_disabled">నిలిపివేయబడింది</string>
+    <string name="desc_sms_shield">ఇన్‌కమింగ్ SMS సందేశాలలోని లింక్‌లను స్వయంచాలకంగా విశ్లేషిస్తుంది మరియు మీరు నొక్కడానికి ముందే స్కామ్ లింక్‌లను హెచ్చరిస్తుంది.</string>
+    <string name="btn_enable_sms">SMS రక్షణను ప్రారంభించండి</string>
+    <string name="btn_sms_active">✓ SMS షీల్డ్ క్రియాశీలంగా ఉంది</string>
+    <string name="title_manual_scanner">మాన్యువల్ URL / UPI స్కానర్</string>
+    <string name="hint_target_url">స్కాన్ చేయడానికి URL లేదా upi:// అతికించండి...</string>
+    <string name="btn_scan_now">ముప్పును పరిశీలించి విశ్లేషించండి</string>
+    <string name="btn_scan_qr">📷 కెమెరాతో QR కోడ్‌ను స్కాన్ చేయండి</string>
+    <string name="title_quick_test">త్వరిత పరీక్ష లింక్‌లు</string>
+    <string name="btn_test_safe">సురక్షిత పరీక్ష</string>
+    <string name="btn_test_malware">మాల్వేర్ పరీక్ష</string>
+    <string name="badge_instant_cache">⚡ తక్షణ కాష్</string>
+    <string name="badge_trusted_domain">⭐ విశ్వసనీయ డొమైన్</string>
+    <string name="badge_community_trust">👥 కమ్యూనిటీ నమ్మకం</string>
+    <string name="title_upi_verification">💳 UPI చెల్లింపు ధృవీకరణ</string>
+    <string name="threat_details_heading">ముప్పు వివరాలు</string>
+    <string name="btn_block_exit">బ్లాక్ చేసి నిష్క్రమించండి</string>
+    <string name="btn_report_threat">🚩 అనుమానాస్పద ముప్పుగా నివేదించండి</string>
+    <string name="btn_open_web_dashboard">వెబ్ డ్యాష్‌బోర్డ్‌లో తెరవండి ↗</string>
 </resources>
+

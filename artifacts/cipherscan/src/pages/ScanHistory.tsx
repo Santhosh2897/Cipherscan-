@@ -162,7 +162,7 @@ export default function ScanHistory() {
               )}
             >
               <Globe size={12} />
-              ALL FLEET SCANS ({isFleetView ? (data?.items?.length ?? 0) : 'Fleet'})
+              {t('fleet_view').toUpperCase()} ({isFleetView ? (data?.items?.length ?? 0) : 'Fleet'})
             </button>
 
             {devices.map((dev) => (
@@ -186,10 +186,11 @@ export default function ScanHistory() {
         ) : (
           <div className="px-3 py-1.5 text-xs font-mono rounded-md border bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-semibold shadow-sm flex items-center gap-2">
             <Smartphone size={13} className="text-cyan-400" />
-            <span>{selectedDevice?.deviceName || 'Your Device'}</span>
+            <span>{selectedDevice?.deviceName || t('device_scope')}</span>
             <span className="opacity-70 text-[11px] font-normal">({data?.items?.length ?? 0} scans)</span>
           </div>
         )}
+
       </div>
 
       <Card className="border-border/50 bg-card/50 backdrop-blur p-3 sm:p-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between shrink-0">

@@ -69,10 +69,10 @@ export default function ThreatIntel() {
       {communityStats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'URLs in Cache', value: communityStats.totalCachedUrls, icon: Zap, color: 'text-cyan-400' },
-            { label: 'Total Scan Hits', value: communityStats.totalScanHits, icon: Activity, color: 'text-blue-400' },
-            { label: 'Community Reports', value: communityStats.totalReports, icon: Flag, color: 'text-amber-400' },
-            { label: 'Malicious Cached', value: communityStats.verdictBreakdown.malicious, icon: Shield, color: 'text-red-400' },
+            { label: t('urls_cached'), value: communityStats.totalCachedUrls, icon: Zap, color: 'text-cyan-400' },
+            { label: t('total_hits'), value: communityStats.totalScanHits, icon: Activity, color: 'text-blue-400' },
+            { label: t('reports_filed'), value: communityStats.totalReports, icon: Flag, color: 'text-amber-400' },
+            { label: t('malicious_cached'), value: communityStats.verdictBreakdown.malicious, icon: Shield, color: 'text-red-400' },
           ].map(({ label, value, icon: Icon, color }) => (
             <Card key={label} className="border-border/50 bg-card/50 backdrop-blur p-4 space-y-1">
               <div className={`flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground`}>
@@ -91,12 +91,12 @@ export default function ThreatIntel() {
           <CardHeader className="border-b border-border/50 pb-4">
             <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase flex items-center gap-2">
               <TrendingUp size={14} className="text-red-400" />
-              Trending Threats (24h)
+              {t('trending_threats_24h')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-3">
             {isLoading ? (
-              <div className="text-muted-foreground font-mono text-xs py-4 text-center animate-pulse">Loading...</div>
+              <div className="text-muted-foreground font-mono text-xs py-4 text-center animate-pulse">{t('running_diagnostics')}</div>
             ) : trending && trending.trendingCategories.length > 0 ? (
               trending.trendingCategories.map((cat, i) => (
                 <div key={cat.category} className="flex items-center justify-between gap-3 p-3 rounded-md bg-black/20 border border-border/30">
@@ -110,14 +110,14 @@ export default function ThreatIntel() {
                     </div>
                   </div>
                   <Badge variant="outline" className="font-mono text-[10px] bg-red-500/10 text-red-400 border-red-500/20 shrink-0">
-                    ×{cat.count} scans
+                    ×{cat.count}
                   </Badge>
                 </div>
               ))
             ) : (
               <div className="text-muted-foreground font-mono text-xs py-6 text-center">
                 <Shield size={24} className="mx-auto mb-2 opacity-30" />
-                No trending threats in the last 24h — community is safe!
+                {t('no_trending_threats_safe')}
               </div>
             )}
           </CardContent>
@@ -128,9 +128,9 @@ export default function ThreatIntel() {
           <CardHeader className="border-b border-border/50 pb-4">
             <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase flex items-center gap-2">
               <Flag size={14} className="text-amber-400" />
-              Top Flagged URLs (Hashed)
+              {t('top_flagged_hashed')}
               <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[9px] font-mono">
-                Privacy Protected
+                {t('privacy_protected')}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -152,7 +152,7 @@ export default function ThreatIntel() {
             ) : (
               <div className="text-muted-foreground font-mono text-xs py-6 text-center">
                 <Flag size={24} className="mx-auto mb-2 opacity-30" />
-                No community reports yet.
+                {t('no_community_reports')}
               </div>
             )}
           </CardContent>
@@ -165,9 +165,9 @@ export default function ThreatIntel() {
           <CardHeader className="border-b border-border/50 pb-4">
             <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase flex items-center gap-2">
               <Users size={14} className="text-blue-400" />
-              My Domain Intelligence
+              {t('my_domain_intelligence')}
               <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[9px] font-mono">
-                {userPatterns.totalDomainsTracked} domains tracked
+                {t('domains_tracked', { count: userPatterns.totalDomainsTracked })}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -184,21 +184,21 @@ export default function ThreatIntel() {
                       </div>
                       {d.isTrusted && (
                         <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[9px] font-mono">
-                          Trusted
+                          {t('trusted')}
                         </Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleTrustAction(d.domain, d.isTrusted ? 'reset' : 'trust')}
-                        title={d.isTrusted ? 'Remove trust' : 'Mark as trusted'}
+                        title={d.isTrusted ? 'Remove trust' : t('trust_domain')}
                         className="p-1 rounded hover:bg-emerald-500/10 text-emerald-400 transition-colors"
                       >
                         {d.isTrusted ? <RotateCcw size={12} /> : <CheckCircle size={12} />}
                       </button>
                       <button
                         onClick={() => handleTrustAction(d.domain, 'block')}
-                        title="Block this domain"
+                        title={t('block_domain')}
                         className="p-1 rounded hover:bg-red-500/10 text-red-400 transition-colors"
                       >
                         <XCircle size={12} />
@@ -209,7 +209,7 @@ export default function ThreatIntel() {
               </div>
             ) : (
               <p className="text-muted-foreground font-mono text-xs text-center py-6">
-                No domain patterns yet. Start scanning links to build your personal intelligence profile.
+                {t('no_domain_patterns')}
               </p>
             )}
           </CardContent>
@@ -217,10 +217,11 @@ export default function ThreatIntel() {
       ) : !deviceId ? (
         <Card className="border-border/50 bg-card/50 backdrop-blur p-6">
           <p className="text-muted-foreground font-mono text-xs text-center">
-            Scan from the Android app to see your personal domain intelligence profile here.
+            {t('scan_from_android_domain')}
           </p>
         </Card>
       ) : null}
+
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { ScanResult } from '@workspace/api-client-react/src/generated/api.schema
 import { ExternalLink, Shield, ImageIcon, Globe, Server, Maximize2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface ScanResultCardProps {
   scan: ScanResult;
@@ -16,6 +17,7 @@ export interface ScanResultCardProps {
 }
 
 export function ScanResultCard({ scan, className, isDetailed = false }: ScanResultCardProps) {
+  const { t } = useLanguage();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -108,7 +110,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
               <div>
                 <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                   <Globe size={12} />
-                  Original Target
+                  {t('original_target')}
                 </p>
                 {(() => {
                   const safeHref = (() => {
@@ -142,7 +144,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                         </>
                       ) : (
                         <span className="text-lg font-medium text-destructive/80 font-mono break-all">
-                          {scan.originalUrl} (Unsafe link protocol blocked)
+                          {scan.originalUrl} ({t('unsafe_link_blocked')})
                         </span>
                       )}
                     </div>
@@ -154,7 +156,7 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                 <div className="pt-2">
                   <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                     <Server size={12} />
-                    Final Destination
+                    {t('final_destination')}
                   </p>
                   <div className="text-sm font-medium text-foreground/80 break-all">
                     {scan.finalUrl}
@@ -174,14 +176,14 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                   <div className="flex items-center justify-between">
                     <h4 className="text-muted-foreground uppercase text-xs font-mono tracking-widest font-semibold flex items-center gap-2">
                       <ImageIcon size={14} />
-                      Live Website Preview
+                      {t('live_preview')}
                     </h4>
                     {Boolean(activeImageSrc) && (
                       <button 
                         onClick={() => setIsZoomOpen(true)}
                         className="text-[10px] font-mono text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
                       >
-                        <Maximize2 size={10} /> Expand
+                        <Maximize2 size={10} /> {t('expand')}
                       </button>
                     )}
                   </div>
@@ -201,13 +203,13 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                           className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-mono gap-1.5">
-                          <Maximize2 size={14} /> Click to Expand
+                          <Maximize2 size={14} /> {t('click_to_expand')}
                         </div>
                       </>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40 flex-col gap-2 p-4 text-center">
                         <ImageIcon size={32} />
-                        <span className="text-xs font-mono">No Preview Available</span>
+                        <span className="text-xs font-mono">{t('no_preview')}</span>
                       </div>
                     )}
                   </div>
@@ -216,20 +218,20 @@ export function ScanResultCard({ scan, className, isDetailed = false }: ScanResu
                 {isDetailed && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-md border border-border/50 bg-black/20">
-                      <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground mb-2">VirusTotal</p>
+                      <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground mb-2">{t('virustotal')}</p>
                       <div className="flex items-center gap-2">
                         <Shield size={16} className={hasVirusTotalDetections ? "text-amber-500" : "text-emerald-500"} />
                         <span className="font-mono text-sm">
-                          {scan.virusTotalScore !== null ? `${scan.virusTotalScore} detections` : 'Unscanned'}
+                          {scan.virusTotalScore !== null ? t('detections', { count: scan.virusTotalScore }) : t('unscanned')}
                         </span>
                       </div>
                     </div>
                     <div className="p-4 rounded-md border border-border/50 bg-black/20">
-                      <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground mb-2">Safe Browsing</p>
+                      <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground mb-2">{t('safe_browsing')}</p>
                       <div className="flex items-center gap-2">
                         <Shield size={16} className={scan.googleSafeBrowsing ? "text-destructive" : "text-emerald-500"} />
                         <span className="font-mono text-sm">
-                          {scan.googleSafeBrowsing ? 'Flagged' : 'Clean'}
+                          {scan.googleSafeBrowsing ? t('flagged') : t('clean')}
                         </span>
                       </div>
                     </div>

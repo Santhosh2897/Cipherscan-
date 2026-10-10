@@ -13,4 +13,36 @@
     <string name="screenshot_preview_desc">Website screenshot preview</string>
     <string name="risk_score_format">Risk Score: %1$d/100</string>
     <string name="reason_bullet_format">• %1$s</string>
+    <string name="tagline_threat_intel">Real-Time Threat Intelligence</string>
+    <string name="title_link_interception">Active Link Interception</string>
+    <string name="desc_link_interception">Protecting incoming HTTP/HTTPS links and UPI payments from malware, phishing and fraud.</string>
+    <string name="title_device_dashboard">Device Defense Dashboard</string>
+    <string name="btn_open_external">OPEN ↗</string>
+    <string name="desc_device_dashboard">View your real-time scan telemetry and defense status</string>
+    <string name="label_device_id">DEVICE ID: </string>
+    <string name="loading_ellipsis">Loading...</string>
+    <string name="btn_copy">COPY 📋</string>
+    <string name="btn_open_dashboard">Open Device Security Dashboard</string>
+    <string name="title_sms_shield">SMS Phishing Shield</string>
+    <string name="badge_active">ACTIVE</string>
+    <string name="badge_disabled">DISABLED</string>
+    <string name="desc_sms_shield">Automatically analyzes links in incoming SMS messages and warns you of scam links before you tap.</string>
+    <string name="btn_enable_sms">Enable SMS Protection</string>
+    <string name="btn_sms_active">✓ SMS Shield Active</string>
+    <string name="title_manual_scanner">Manual URL / UPI Scanner</string>
+    <string name="hint_target_url">Paste URL or upi:// string to scan...</string>
+    <string name="btn_scan_now">Inspect &amp; Analyze Threat</string>
+    <string name="btn_scan_qr">📷 Scan QR Code with Camera</string>
+    <string name="title_quick_test">Quick Test Links</string>
+    <string name="btn_test_safe">Test Safe</string>
+    <string name="btn_test_malware">Test Malware</string>
+    <string name="badge_instant_cache">⚡ Instant Cache</string>
+    <string name="badge_trusted_domain">⭐ Trusted Domain</string>
+    <string name="badge_community_trust">👥 Community Trust</string>
+    <string name="title_upi_verification">💳 UPI Payment Verification</string>
+    <string name="threat_details_heading">Threat Details</string>
+    <string name="btn_block_exit">Block / Exit</string>
+    <string name="btn_report_threat">🚩 Report as Suspicious Threat</string>
+    <string name="btn_open_web_dashboard">Open in Web Dashboard ↗</string>
 </resources>
+

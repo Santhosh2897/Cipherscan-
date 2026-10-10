@@ -12,5 +12,36 @@
     <string name="redirect_chain_hide">रिडायरेक्ट साखळी लपवा ▲</string>
     <string name="screenshot_preview_desc">वेबसाइट स्क्रीनशॉट पूर्वावलोकन</string>
     <string name="risk_score_format">धोका गुण: %1$d/100</string>
-    <string name="reason_bullet_format">• %1$s</string>
+    <string name="tagline_threat_intel">रिअल-टाइम थ्रेट इंटेलिजन्स</string>
+    <string name="title_link_interception">सक्रिय लिंक इंटरसेप्शन</string>
+    <string name="desc_link_interception">मालवेअर, फिशिंग आणि फसवणुकीपासून येणाऱ्या HTTP/HTTPS लिंक्स आणि UPI पेमेंटचे संरक्षण.</string>
+    <string name="title_device_dashboard">डिव्हाइस डिफेन्स डॅशबोर्ड</string>
+    <string name="btn_open_external">उघडा ↗</string>
+    <string name="desc_device_dashboard">तुमची रिअल-टाइम स्कॅन टेलीमेट्री आणि संरक्षण स्थिती पहा</string>
+    <string name="label_device_id">डिव्हाइस आयडी: </string>
+    <string name="loading_ellipsis">लोड होत आहे...</string>
+    <string name="btn_copy">कॉपी करा 📋</string>
+    <string name="btn_open_dashboard">डिव्हाइस सुरक्षा डॅशबोर्ड उघडा</string>
+    <string name="title_sms_shield">एसएमएस फिशिंग शील्ड</string>
+    <string name="badge_active">सक्रिय</string>
+    <string name="badge_disabled">अक्षम</string>
+    <string name="desc_sms_shield">येणाऱ्या एसएमएस संदेशांमधील लिंक्सचे स्वयंचलितपणे विश्लेषण करते आणि टॅप करण्यापूर्वी स्कॅम लिंक्सबद्दल चेतावणी देते.</string>
+    <string name="btn_enable_sms">एसएमएस संरक्षण सक्षम करा</string>
+    <string name="btn_sms_active">✓ एसएमएस शील्ड सक्रिय</string>
+    <string name="title_manual_scanner">मॅन्युअल URL / UPI स्कॅनर</string>
+    <string name="hint_target_url">स्कॅन करण्यासाठी URL किंवा upi:// स्ट्रिंग पेस्ट करा...</string>
+    <string name="btn_scan_now">धोक्याची तपासणी आणि विश्लेषण करा</string>
+    <string name="btn_scan_qr">📷 कॅमेऱ्याने QR कोड स्कॅन करा</string>
+    <string name="title_quick_test">जलद चाचणी लिंक्स</string>
+    <string name="btn_test_safe">सुरक्षित चाचणी</string>
+    <string name="btn_test_malware">मालवेअर चाचणी</string>
+    <string name="badge_instant_cache">⚡ झटपट कॅशे</string>
+    <string name="badge_trusted_domain">⭐ विश्वासू डोमेन</string>
+    <string name="badge_community_trust">👥 समुदाय विश्वास</string>
+    <string name="title_upi_verification">💳 UPI पेमेंट पडताळणी</string>
+    <string name="threat_details_heading">धोक्याचा तपशील</string>
+    <string name="btn_block_exit">ब्लॉक करा आणि बाहेर पडा</string>
+    <string name="btn_report_threat">🚩 संशयास्पद धोका म्हणून तक्रार करा</string>
+    <string name="btn_open_web_dashboard">वेब डॅशबोर्डमध्ये उघडा ↗</string>
 </resources>
+

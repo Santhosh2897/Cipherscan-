@@ -236,58 +236,58 @@ export default function Dashboard() {
                 <Users size={14} className="text-cyan-400" />
               </div>
               <CardTitle className="text-sm font-mono tracking-widest text-cyan-400/80 uppercase">
-                Community Threat Intelligence Network
+                {t('community_network_title')}
               </CardTitle>
               <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 font-mono text-[9px] uppercase">
-                LIVE
+                {t('live_badge')}
               </Badge>
             </div>
             <Link href="/threat-intel" className="text-xs font-mono text-cyan-400 hover:underline uppercase tracking-widest">
-              Full Feed →
+              {t('full_feed')}
             </Link>
           </CardHeader>
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="p-3 rounded-md bg-black/20 border border-border/30 space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                  <Zap size={10} className="text-cyan-400" /> URLs Cached
+                  <Zap size={10} className="text-cyan-400" /> {t('urls_cached')}
                 </div>
                 <div className="text-xl font-bold font-mono text-cyan-300">
                   {formatNumber(communityStats.totalCachedUrls)}
                 </div>
                 <div className="text-[10px] text-muted-foreground font-mono">
-                  {formatNumber(communityStats.totalScanHits)} total hits
+                  {formatNumber(communityStats.totalScanHits)} {t('total_hits')}
                 </div>
               </div>
 
               <div className="p-3 rounded-md bg-black/20 border border-border/30 space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                  <TrendingUp size={10} className="text-emerald-400" /> Safe URLs
+                  <TrendingUp size={10} className="text-emerald-400" /> {t('safe_urls')}
                 </div>
                 <div className="text-xl font-bold font-mono text-emerald-400">
                   {formatNumber(communityStats.verdictBreakdown.safe)}
                 </div>
-                <div className="text-[10px] text-muted-foreground font-mono">community verified</div>
+                <div className="text-[10px] text-muted-foreground font-mono">{t('community_verified')}</div>
               </div>
 
               <div className="p-3 rounded-md bg-black/20 border border-border/30 space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                  <ShieldX size={10} className="text-red-400" /> Malicious Cached
+                  <ShieldX size={10} className="text-red-400" /> {t('malicious_cached')}
                 </div>
                 <div className="text-xl font-bold font-mono text-red-400">
                   {formatNumber(communityStats.verdictBreakdown.malicious)}
                 </div>
-                <div className="text-[10px] text-muted-foreground font-mono">flagged by intelligence</div>
+                <div className="text-[10px] text-muted-foreground font-mono">{t('flagged_by_intel')}</div>
               </div>
 
               <div className="p-3 rounded-md bg-black/20 border border-border/30 space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                  <Flag size={10} className="text-amber-400" /> Reports Filed
+                  <Flag size={10} className="text-amber-400" /> {t('reports_filed')}
                 </div>
                 <div className="text-xl font-bold font-mono text-amber-400">
                   {formatNumber(communityStats.totalReports)}
                 </div>
-                <div className="text-[10px] text-muted-foreground font-mono">by users like you</div>
+                <div className="text-[10px] text-muted-foreground font-mono">{t('by_users_like_you')}</div>
               </div>
             </div>
 
@@ -295,7 +295,7 @@ export default function Dashboard() {
             {trending && trending.trendingCategories.length > 0 && (
               <div>
                 <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <TrendingUp size={10} /> Trending Threat Categories (24h)
+                  <TrendingUp size={10} /> {t('trending_categories_24h')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {trending.trendingCategories.slice(0, 6).map((cat) => (
@@ -317,7 +317,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border-border/50 bg-card/50 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">Threat Volume (7 Days)</CardTitle>
+            <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">
+              {t('threat_volume_7d')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {timeline ? <ScanTimelineChart data={timeline} /> : null}
@@ -326,7 +328,9 @@ export default function Dashboard() {
 
         <Card className="border-border/50 bg-card/50 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">Threat Taxonomy</CardTitle>
+            <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">
+              {t('threat_taxonomy')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {threats ? <ThreatCategoryChart data={threats} /> : null}
@@ -337,7 +341,7 @@ export default function Dashboard() {
       <Card className="border-border/50 bg-card/50 backdrop-blur">
         <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 pb-4">
           <CardTitle className="text-sm font-mono tracking-widest text-muted-foreground uppercase">
-            {isFleetView ? "Live Multi-Device Scan Feed" : `Live Scan Feed — ${selectedDevice?.deviceName || selectedDeviceId}`}
+            {isFleetView ? t('live_feed_fleet') : t('live_feed_device', { name: selectedDevice?.deviceName || selectedDeviceId })}
           </CardTitle>
           <Link href="/scans" className="text-xs font-mono text-primary hover:underline uppercase tracking-widest">
             {t('view_all')}
@@ -346,7 +350,7 @@ export default function Dashboard() {
         <CardContent className="p-0">
           {(!recentScans?.items || recentScans.items.length === 0) ? (
             <div className="p-8 text-center text-muted-foreground font-mono text-sm">
-              No recent scans recorded yet. Use Deep Scan or scan from an Android phone to see live activity.
+              {t('no_scans_dashboard_desc')}
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -372,12 +376,13 @@ export default function Dashboard() {
                     </div>
                     <div className="shrink-0 text-right ml-4">
                       <div className="text-xl font-mono font-bold">{scan.riskScore}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Score</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">{t('score_label')}</div>
                     </div>
                 </Link>
               ))}
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>

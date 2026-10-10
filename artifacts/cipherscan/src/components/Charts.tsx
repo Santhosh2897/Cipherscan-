@@ -3,8 +3,10 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend, Cell
 } from 'recharts';
+import { useLanguage } from '@/context/LanguageContext';
 
 export function ScanTimelineChart({ data }: { data: any[] }) {
+  const { t } = useLanguage();
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -42,8 +44,8 @@ export function ScanTimelineChart({ data }: { data: any[] }) {
             contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
             itemStyle={{ color: 'hsl(var(--foreground))' }}
           />
-          <Area type="monotone" dataKey="total" name="Total Scans" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorTotal)" />
-          <Area type="monotone" dataKey="threats" name="Threats Blocked" stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorThreats)" />
+          <Area type="monotone" dataKey="total" name={t('total_scans')} stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorTotal)" />
+          <Area type="monotone" dataKey="threats" name={t('threats_detected')} stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorThreats)" />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -51,10 +53,11 @@ export function ScanTimelineChart({ data }: { data: any[] }) {
 }
 
 export function ThreatCategoryChart({ data }: { data: any[] }) {
+  const { t } = useLanguage();
   if (!data || data.length === 0) {
     return (
       <div className="h-[300px] w-full flex flex-col items-center justify-center text-muted-foreground font-mono text-xs gap-2">
-        <span className="opacity-60">NO THREAT TAXONOMY RECORDED YET</span>
+        <span className="opacity-60">{t('no_taxonomy_yet')}</span>
       </div>
     );
   }
@@ -70,7 +73,7 @@ export function ThreatCategoryChart({ data }: { data: any[] }) {
             cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
             contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
           />
-          <Bar dataKey="count" name="Count" radius={[0, 4, 4, 0]}>
+          <Bar dataKey="count" name={t('count_label')} radius={[0, 4, 4, 0]}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill="hsl(var(--destructive))" opacity={1 - index * 0.15} />
             ))}
@@ -80,3 +83,4 @@ export function ThreatCategoryChart({ data }: { data: any[] }) {
     </div>
   );
 }
+

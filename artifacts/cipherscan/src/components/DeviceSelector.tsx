@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDevice } from '@/context/DeviceContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Smartphone, Globe, Check, ChevronDown, X, Shield, Filter, Lock, Unlock, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 export function DeviceSelector({ className }: { className?: string }) {
+  const { t } = useLanguage();
   const {
     role,
     isAdmin,
@@ -86,7 +88,7 @@ export function DeviceSelector({ className }: { className?: string }) {
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse ml-0.5" />
           <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-cyan-500/30 text-cyan-300 font-mono">
-            DEVICE VIEW
+            {t('device_view')}
           </Badge>
         </div>
 
@@ -97,7 +99,7 @@ export function DeviceSelector({ className }: { className?: string }) {
           className="h-8 font-mono text-xs gap-1.5 border-border/60 text-muted-foreground hover:text-foreground"
         >
           <KeyRound size={13} className="text-amber-400" />
-          <span className="hidden sm:inline">Admin Login</span>
+          <span className="hidden sm:inline">{t('admin_login')}</span>
         </Button>
 
         {/* Admin Unlock Modal */}
@@ -106,17 +108,17 @@ export function DeviceSelector({ className }: { className?: string }) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-cyan-400 font-mono text-base">
                 <Shield size={18} />
-                <span>Elevate to Admin View</span>
+                <span>{t('elevate_admin_view')}</span>
               </DialogTitle>
               <DialogDescription className="text-gray-400 text-xs">
-                Enter the 6-digit Admin PIN to unlock the full Fleet Overview and inspect all registered devices.
+                {t('admin_pin_desc')}
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleUnlockSubmit} className="space-y-4 py-2">
               <Input
                 type="password"
-                placeholder="Enter 6-digit PIN..."
+                placeholder={t('enter_admin_pin')}
                 value={adminPin}
                 maxLength={6}
                 onChange={(e) => setAdminPin(e.target.value)}
@@ -135,14 +137,14 @@ export function DeviceSelector({ className }: { className?: string }) {
                   onClick={() => setShowAdminModal(false)}
                   className="font-mono text-xs"
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={adminPin.length < 6 || isVerifyingPin}
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-xs"
                 >
-                  {isVerifyingPin ? 'Verifying...' : 'Unlock Admin View'}
+                  {isVerifyingPin ? t('verifying') : t('unlock_admin_view')}
                 </Button>
               </DialogFooter>
             </form>
@@ -173,7 +175,7 @@ export function DeviceSelector({ className }: { className?: string }) {
             {isFleetView ? (
               <>
                 <Globe size={14} className="text-primary" />
-                <span className="font-semibold">Fleet Overview (All Devices)</span>
+                <span className="font-semibold">{t('fleet_overview_all')}</span>
                 {devices.length > 0 && (
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono ml-1">
                     {devices.length}
@@ -195,7 +197,7 @@ export function DeviceSelector({ className }: { className?: string }) {
 
         <DropdownMenuContent align="start" className="w-72 sm:w-80 p-2 font-mono text-xs bg-popover/95 backdrop-blur-md border-border">
           <DropdownMenuLabel className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-2 py-1.5 flex items-center justify-between">
-            <span>Admin Device Scope</span>
+            <span>{t('admin_device_scope')}</span>
             {isLoadingDevices && <span className="text-[9px] lowercase text-primary animate-pulse">refreshing...</span>}
           </DropdownMenuLabel>
 
@@ -209,8 +211,8 @@ export function DeviceSelector({ className }: { className?: string }) {
             <div className="flex items-center gap-2.5">
               <Globe size={16} className={isFleetView ? 'text-primary' : 'text-muted-foreground'} />
               <div>
-                <p className="font-medium">All Devices (Fleet View)</p>
-                <p className="text-[10px] text-muted-foreground">Aggregated telemetry from all endpoints</p>
+                <p className="font-medium">{t('fleet_overview_all')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('all_endpoints_aggregated')}</p>
               </div>
             </div>
             {isFleetView && <Check size={14} className="text-primary shrink-0" />}
@@ -220,13 +222,13 @@ export function DeviceSelector({ className }: { className?: string }) {
 
           {/* Registered Devices List */}
           <div className="px-2 py-1 text-[10px] uppercase font-semibold text-muted-foreground">
-            Registered Devices ({devices.length})
+            {t('registered_devices', { count: devices.length })}
           </div>
 
           <div className="max-h-56 overflow-y-auto space-y-0.5 pr-1">
             {devices.length === 0 ? (
               <div className="px-2.5 py-3 text-center text-[11px] text-muted-foreground italic">
-                No active devices detected yet. Scans sent from the Android app will appear here.
+                {t('no_active_devices')}
               </div>
             ) : (
               devices.map((device) => {
@@ -283,21 +285,21 @@ export function DeviceSelector({ className }: { className?: string }) {
               className="w-full text-left px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1.5 hover:bg-secondary/40 rounded transition-colors"
             >
               <Filter size={12} />
-              <span>Filter by custom Device ID...</span>
+              <span>{t('filter_by_custom_device')}</span>
             </button>
           ) : (
             <form onSubmit={handleCustomSubmit} className="p-1 space-y-1.5">
               <div className="flex items-center gap-1">
                 <Input
                   type="text"
-                  placeholder="Paste device UUID..."
+                  placeholder={t('paste_device_uuid')}
                   value={customInput}
                   onChange={(e) => setCustomInput(e.target.value)}
                   className="h-7 text-xs font-mono py-1 px-2"
                   autoFocus
                 />
                 <Button type="submit" size="sm" className="h-7 text-[10px] px-2">
-                  Apply
+                  {t('apply')}
                 </Button>
                 <Button
                   type="button"
@@ -320,11 +322,11 @@ export function DeviceSelector({ className }: { className?: string }) {
           variant="ghost"
           size="sm"
           onClick={clearDeviceFilter}
-          title="Reset to All Devices (Fleet View)"
+          title={t('reset_to_fleet')}
           className="h-8 px-2 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:bg-secondary/50 gap-1"
         >
           <X size={12} />
-          <span className="hidden sm:inline">Reset to Fleet</span>
+          <span className="hidden sm:inline">{t('reset_to_fleet')}</span>
         </Button>
       )}
     </div>
@@ -335,6 +337,7 @@ export function DeviceSelector({ className }: { className?: string }) {
  * Banner shown on top of pages when a device filter is currently applied.
  */
 export function ActiveDeviceBanner() {
+  const { t } = useLanguage();
   const { selectedDeviceId, selectedDevice, clearDeviceFilter, isFleetView, isDeviceUser } = useDevice();
 
   if (isFleetView) return null;
@@ -348,14 +351,14 @@ export function ActiveDeviceBanner() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-cyan-300 text-sm">
-              {selectedDevice?.deviceName || 'Device Telemetry Active'}
+              {selectedDevice?.deviceName || t('device_telemetry_active')}
             </span>
             <Badge variant="outline" className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
-              {isDeviceUser ? 'PROTECTED ENDPOINT' : 'SCOPED ADMIN VIEW'}
+              {isDeviceUser ? t('protected_endpoint') : t('scoped_admin_view')}
             </Badge>
           </div>
           <p className="text-muted-foreground text-[11px] mt-0.5">
-            Displaying scans and telemetry for device ID:{' '}
+            {t('displaying_scans_for')}{' '}
             <span className="text-cyan-200 select-all font-semibold">{selectedDeviceId}</span>
           </p>
         </div>
@@ -370,10 +373,11 @@ export function ActiveDeviceBanner() {
             className="text-xs font-mono h-8 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50 gap-1.5"
           >
             <Globe size={13} />
-            <span>Switch to Fleet View</span>
+            <span>{t('switch_to_fleet')}</span>
           </Button>
         </div>
       )}
     </div>
+
   );
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CipherScan</string>
+    <string name="verifying_link">링크 안전성 확인 중…</string>
+    <string name="verdict_safe">안전</string>
+    <string name="verdict_suspicious">의심됨</string>
+    <string name="verdict_malicious">악성 링크</string>
+    <string name="btn_abort">중단 및 돌아가기</string>
+    <string name="btn_proceed">계속 진행</string>
+    <string name="threat_reasons_heading">경고 사유</string>
+    <string name="redirect_chain_show">리디렉션 체인 보기 ▼</string>
+    <string name="redirect_chain_hide">리디렉션 체인 숨기기 ▲</string>
+    <string name="screenshot_preview_desc">웹사이트 스크린샷 미리보기</string>
+    <string name="risk_score_format">위험도 점수: %1$d/100</string>
+    <string name="reason_bullet_format">• %1$s</string>
+    <string name="tagline_threat_intel">실시간 사이버 위협 인텔리전스</string>
+    <string name="title_link_interception">실시간 링크 감지 및 방어</string>
+    <string name="desc_link_interception">악성코드, 피싱, 금융 사기로부터 수신된 HTTP/HTTPS 링크 및 결제를 보호합니다.</string>
+    <string name="title_device_dashboard">디바이스 방어 대시보드</string>
+    <string name="btn_open_external">열기 ↗</string>
+    <string name="desc_device_dashboard">실시간 검사 텔레메트리 및 방어 현황 보기</string>
+    <string name="label_device_id">디바이스 ID: </string>
+    <string name="loading_ellipsis">로딩 중...</string>
+    <string name="btn_copy">복사 📋</string>
+    <string name="btn_open_dashboard">기기 보안 대시보드 열기</string>
+    <string name="title_sms_shield">SMS 피싱 보호막</string>
+    <string name="badge_active">활성</string>
+    <string name="badge_disabled">비활성</string>
+    <string name="desc_sms_shield">수신된 문자 메시지의 링크를 자동으로 분석하여 탭하기 전에 사기 링크를 경고합니다.</string>
+    <string name="btn_enable_sms">SMS 보호 활성화</string>
+    <string name="btn_sms_active">✓ SMS 보호막 활성</string>
+    <string name="title_manual_scanner">수동 URL / 결제 검사기</string>
+    <string name="hint_target_url">검사할 URL 또는 결제 주소를 입력하세요...</string>
+    <string name="btn_scan_now">위협 분석 및 정밀 검사</string>
+    <string name="btn_scan_qr">📷 카메라로 QR 코드 스캔</string>
+    <string name="title_quick_test">빠른 테스트 링크</string>
+    <string name="btn_test_safe">안전 테스트</string>
+    <string name="btn_test_malware">악성코드 테스트</string>
+    <string name="badge_instant_cache">⚡ 즉시 캐시</string>
+    <string name="badge_trusted_domain">⭐ 신뢰할 수 있는 도메인</string>
+    <string name="badge_community_trust">👥 커뮤니티 신뢰</string>
+    <string name="title_upi_verification">💳 결제 검증</string>
+    <string name="threat_details_heading">위협 세부 정보</string>
+    <string name="btn_block_exit">차단 및 나가기</string>
+    <string name="btn_report_threat">🚩 의심스러운 위협으로 신고</string>
+    <string name="btn_open_web_dashboard">웹 대시보드에서 열기 ↗</string>
+</resources>

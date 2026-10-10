@@ -5,6 +5,7 @@ import { mr } from './mr';
 import { ta } from './ta';
 import { te } from './te';
 import { bn } from './bn';
+import { ko } from './ko';
 
 export const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   en,
@@ -13,6 +14,7 @@ export const translations: Record<SupportedLanguage, Record<TranslationKey, stri
   ta,
   te,
   bn,
+  ko,
 };
 
-export { en, hi, mr, ta, te, bn };
+export { en, hi, mr, ta, te, bn, ko };

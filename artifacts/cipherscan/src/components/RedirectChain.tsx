@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface RedirectChainProps {
   chain: string[];
@@ -8,6 +9,7 @@ export interface RedirectChainProps {
 }
 
 export function RedirectChain({ chain, className }: RedirectChainProps) {
+  const { t } = useLanguage();
   const normalizedChain: string[] = Array.isArray(chain)
     ? chain
     : typeof chain === 'string'
@@ -27,7 +29,7 @@ export function RedirectChain({ chain, className }: RedirectChainProps) {
     <div className={cn("space-y-3 font-mono text-sm", className)}>
       <h4 className="text-muted-foreground uppercase text-xs tracking-widest font-semibold mb-4 flex items-center gap-2">
         <Globe size={14} />
-        Redirect Chain ({normalizedChain.length} hops)
+        {t('redirect_chain_hops', { count: normalizedChain.length })}
       </h4>
       <div className="relative border-l-2 border-muted pl-4 ml-2 space-y-6">
         {normalizedChain.map((url, i) => {
@@ -51,7 +53,7 @@ export function RedirectChain({ chain, className }: RedirectChainProps) {
               )} />
               
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Hop {i + 1}</span>
+                <span className="text-xs text-muted-foreground">{t('hop_num', { num: i + 1 })}</span>
                 <div className="break-all bg-card p-2 border rounded-md">
                   <span className={cn(
                     "font-bold",
@@ -71,3 +73,4 @@ export function RedirectChain({ chain, className }: RedirectChainProps) {
     </div>
   );
 }
+

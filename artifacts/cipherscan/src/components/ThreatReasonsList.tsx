@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface ThreatReasonsListProps {
   reasons: string[];
@@ -8,6 +9,7 @@ export interface ThreatReasonsListProps {
 }
 
 export function ThreatReasonsList({ reasons, className }: ThreatReasonsListProps) {
+  const { t } = useLanguage();
   const normalizedReasons: string[] = Array.isArray(reasons)
     ? reasons
     : typeof reasons === 'string'
@@ -26,7 +28,7 @@ export function ThreatReasonsList({ reasons, className }: ThreatReasonsListProps
   return (
     <div className={cn("space-y-2", className)}>
       <h4 className="text-muted-foreground uppercase text-xs font-mono tracking-widest font-semibold mb-3">
-        Detected Threats
+        {t('detected_threats')}
       </h4>
       <ul className="space-y-2">
         {normalizedReasons.map((reason, i) => (
@@ -39,3 +41,4 @@ export function ThreatReasonsList({ reasons, className }: ThreatReasonsListProps
     </div>
   );
 }
+

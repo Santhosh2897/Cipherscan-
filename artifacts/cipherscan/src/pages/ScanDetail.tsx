@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Pull stored device ID from localStorage (written by Android WebView bridge or from the web analyze form)
 function getLocalDeviceId(): string | null {
@@ -15,6 +16,7 @@ function getLocalDeviceId(): string | null {
 }
 
 export default function ScanDetail() {
+  const { t } = useLanguage();
   const [, params] = useRoute('/scans/:id');
   const id = params?.id ? parseInt(params.id, 10) : null;
   const deviceId = getLocalDeviceId();
@@ -84,7 +86,7 @@ export default function ScanDetail() {
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold font-mono tracking-tight text-foreground truncate">
-              Scan #{scan.id}
+              {t('scan_num', { id: scan.id })}
             </h1>
             <div className="px-2 py-1 rounded bg-muted/50 border border-border/50 text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
               <Calendar size={12} />
@@ -93,17 +95,17 @@ export default function ScanDetail() {
             {/* Cache indicator */}
             {(scan as any).fromCache && (
               <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 font-mono text-[10px] gap-1 flex items-center">
-                <Zap size={9} /> Instant (Cached)
+                <Zap size={9} /> {t('instant_cached')}
               </Badge>
             )}
             {(scan as any).fromTrustedDomain && (
               <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-mono text-[10px] gap-1 flex items-center">
-                <ShieldCheck size={9} /> Trusted Domain
+                <ShieldCheck size={9} /> {t('trusted_domain')}
               </Badge>
             )}
           </div>
           <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
-            Trigger: <span className="uppercase font-mono tracking-wider">{scan.triggerType}</span>
+            {t('trigger_label')}: <span className="uppercase font-mono tracking-wider">{scan.triggerType}</span>
             {scan.deviceName && (
               <span className="text-xs text-muted-foreground/70">· {scan.deviceName}</span>
             )}
@@ -136,22 +138,22 @@ export default function ScanDetail() {
               </div>
               <div>
                 <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                  <Users size={10} /> Community Trust Score
+                  <Users size={10} /> {t('community_trust_score')}
                 </p>
                 {trustScore >= 0 ? (
                   <div className="space-y-0.5">
                     <p className={cn('text-sm font-semibold font-mono', trustColor)}>
-                      {trustScore >= 70 ? 'Community Verified Safe' :
-                       trustScore >= 30 ? 'Low Community Confidence' :
-                       'Community Flagged as Threat'}
+                      {trustScore >= 70 ? t('community_verified_safe') :
+                       trustScore >= 30 ? t('low_community_confidence') :
+                       t('community_flagged_threat')}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {communityTrust.scanCount.toLocaleString()} users scanned · {communityTrust.communityFlags} community flags
+                      {t('users_scanned', { count: communityTrust.scanCount.toLocaleString() })} · {t('community_flags', { count: communityTrust.communityFlags })}
                     </p>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground font-mono">
-                    First to scan this URL — no community data yet
+                    {t('no_community_data')}
                   </p>
                 )}
               </div>
@@ -161,11 +163,11 @@ export default function ScanDetail() {
             <div className="flex items-center gap-2 shrink-0">
               {reportSent ? (
                 <div className="flex items-center gap-2 text-emerald-400 text-sm font-mono">
-                  <CheckCircle size={16} /> Report submitted — thank you!
+                  <CheckCircle size={16} /> {t('report_submitted')}
                 </div>
               ) : deviceId ? (
                 <>
-                  <p className="text-[10px] font-mono text-muted-foreground mr-1 hidden sm:block">Report as:</p>
+                  <p className="text-[10px] font-mono text-muted-foreground mr-1 hidden sm:block">{t('report_as')}</p>
                   <Button
                     size="sm"
                     variant="outline"
@@ -173,7 +175,7 @@ export default function ScanDetail() {
                     disabled={reportThreat.isPending}
                     className="font-mono text-xs border-amber-500/30 text-amber-400 hover:bg-amber-950/30 gap-1.5"
                   >
-                    <AlertTriangle size={12} /> Suspicious
+                    <AlertTriangle size={12} /> {t('verdict_suspicious')}
                   </Button>
                   <Button
                     size="sm"
@@ -182,12 +184,12 @@ export default function ScanDetail() {
                     disabled={reportThreat.isPending}
                     className="font-mono text-xs border-red-500/30 text-red-400 hover:bg-red-950/30 gap-1.5"
                   >
-                    <Flag size={12} /> Malicious
+                    <Flag size={12} /> {t('verdict_malicious')}
                   </Button>
                 </>
               ) : (
                 <p className="text-[10px] font-mono text-muted-foreground italic">
-                  Scan from Android app to report threats
+                  {t('scan_from_android')}
                 </p>
               )}
             </div>
